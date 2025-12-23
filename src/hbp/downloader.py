@@ -7,7 +7,6 @@
 # - Add a forward/backward flag to control the direction of hbp seek.
 # - Add "{team} up X-Y" at moment of HBP
 # - If the HBP triggers a score change, please note!
-# - Download video (filename: 'videos/{game_pk}_{play_id}.txt')
 ## -------------------------------------------------------------------------- ##
 
 
@@ -184,8 +183,8 @@ def main(start_date: Optional[str] = None) -> int:
                 print()
                 game_deets = bb.get_mlb_game_deets(game, double_verbose)
 
-                if test_mode and index > 1:
-                    break
+                # if test_mode and index > 1:
+                #     break
 
                 hbp_events = bb.get_mlb_hit_by_pitch_events_from_single_game(game, double_verbose)
                 if hbp_events is None or len(hbp_events) == 0:
@@ -210,8 +209,11 @@ def main(start_date: Optional[str] = None) -> int:
                         print(f"😢 Video unavailable.")
                     else:
                         ## download video
-                        video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], video_dir, verbose)
-                        print(f"VIDEO: {video_filename}")
+                        if test_mode:
+                            print("Pretending to download video....")
+                        else:
+                            video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], video_dir, verbose)
+                            print(f"VIDEO: {video_filename}")
 
 
 

@@ -145,8 +145,19 @@ def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optio
                 'start_speed' : play['playEvents'][-1]['pitchData']['startSpeed'],
                 'end_speed'   : play['playEvents'][-1]['pitchData']['endSpeed'],
                 'pitch_name'  : play['playEvents'][-1]['details']['type']['description'],
+                'home_score'  : play['result']['homeScore'],
+                'away_score'  : play['result']['awayScore'],
             },
             "description": play['result']['description'],
         })
 
     return hit_by_pitch_events
+
+
+def get_mlb_team_attribute(full_team_str: str, sought_after_attr: str, verbose_bool: Optional[bool] = False) -> str:
+    team_attr = None
+    for team_deets in const.TEAMS.values():
+        if team_deets.get("name") == full_team_str:
+            team_attr = team_deets.get(sought_after_attr)
+    return team_attr
+

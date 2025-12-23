@@ -11,6 +11,7 @@ numpy
 pandas
 pybaseball
 Requests
+tqdm
 Unidecode
 
 ## Debugging, Documentation, etc.
