@@ -1,0 +1,21 @@
+# Hit By Pitches requirements.txt
+# Author: Hossein Fuller <hossfuller@protonmail.com>
+# Version: 1.0.0
+
+## General operation
+beautifulsoup4
+colorama
+./libhbp
+numpy
+pandas
+pybaseball
+Requests
+Unidecode
+
+## Debugging, Documentation, etc.
+black
+mypy
+no_implicit_optional
+pipreqs
+pytest
+sphinx
