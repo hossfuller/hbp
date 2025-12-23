@@ -1,6 +1,6 @@
-# Hit By Pitches requirements.txt
-# Author: Hossein Fuller <hossfuller@protonmail.com>
-# Version: 1.0.0
+## Hit By Pitches requirements.txt
+## Author: Hossein Fuller <hossfuller@protonmail.com>
+## Version: 1.0.0
 
 ## General operation
 beautifulsoup4
