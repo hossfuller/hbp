@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 
+## ---------------------------------------------------------------------------->
+## Skeet constants
+## ---------------------------------------------------------------------------->
+SKEETS_CHAR_LIMIT = 300
+
 
 ## ---------------------------------------------------------------------------->
 ## MLB Stats URL values
 ## ---------------------------------------------------------------------------->
-MLB_STATS_BASE_URL       = 'https://statsapi.mlb.com'
-MLB_STATS_SCHEDULE_STUB  = '/api/v1/schedule'
-MLB_STATS_GAME_STUB      = '/api/v1/game/<<GAME_PK>>/content'
-MLB_STATS_LIVE_FEED_STUB = '/api/v1.1/game/<<GAME_PK>>/feed/live'
+BASEBALL_SAVANT_PLAY_VIDEO_URL = 'https://baseballsavant.mlb.com/sporty-videos'
+MLB_STATS_BASE_URL             = 'https://statsapi.mlb.com'
+MLB_STATS_SCHEDULE_STUB        = '/api/v1/schedule'
+MLB_STATS_GAME_STUB            = '/api/v1/game/<<GAME_PK>>/content'
+MLB_STATS_LIVE_FEED_STUB       = '/api/v1.1/game/<<GAME_PK>>/feed/live'
 
 
 ## ---------------------------------------------------------------------------->

@@ -7,10 +7,14 @@ __description__ = "Hit By Pitches - Find's the MLB HBP events and posts them to 
 
 # Import key components to make them available at package level
 from . import constants
-from . import functions
+from . import func_general
+from . import func_baseball
+from . import func_skeet
 
 # Package-level variables
 __all__ = [
     'constants',
-    'functions'
+    'func_general',
+    'func_baseball',
+    'func_skeet',
 ]

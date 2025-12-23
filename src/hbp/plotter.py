@@ -12,7 +12,9 @@ import time
 
 # Import application modules
 from . import constants as const
-from . import functions as hbp
+from . import func_general as gen
+from . import func_baseball as bb
+from . import func_skeet as sk
 
 import libhbp.basic
 from libhbp.configurator import ConfigReader
@@ -40,14 +42,8 @@ parser.add_argument(
 parser.add_argument(
     "-d",
     "--date",
-    type=hbp.parse_date_string,
+    type=gen.parse_date_string,
     help='Date to check for HBP events. Must be in "2023-08-01" format. Defaults to yesterday\'s date.'
-)
-parser.add_argument(
-    "-i",
-    "--indent",
-    type=int,
-    help='Number of spaces to indent lines.'
 )
 parser.add_argument(
     "-n",
@@ -106,11 +102,6 @@ config = ConfigReader(args.config)
 start_date = datetime.strftime(datetime.now() - timedelta(days=1), '%Y-%m-%d')
 if args.date:
     start_date = args.date
-
-indent_size = int(config.get("operations", "indent_size"))
-if args.indent:
-    config.set("operations", "indent_size", str(args.indent))
-    indent_size = args.indent
 
 plot_dir = config.get("paths", "plot_dir")
 if args.plot_dir:

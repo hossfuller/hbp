@@ -6,6 +6,7 @@
 beautifulsoup4
 colorama
 ./libhbp
+lxml
 numpy
 pandas
 pybaseball
