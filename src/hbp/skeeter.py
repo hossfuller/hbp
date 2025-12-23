@@ -38,6 +38,12 @@ parser.add_argument(
     help="Override default config with custom settings file (default: '%(default)s').",
 )
 parser.add_argument(
+    "-d",
+    "--date",
+    type=hbp.parse_date_string,
+    help='Date to check for HBP events. Must be in "2023-08-01" format. Defaults to yesterday\'s date.'
+)
+parser.add_argument(
     "-i",
     "--indent",
     type=int,
@@ -97,6 +103,10 @@ args = parser.parse_args()
 ## Read and update configuration
 config = ConfigReader(args.config)
 
+start_date = datetime.strftime(datetime.now() - timedelta(days=1), '%Y-%m-%d')
+if args.date:
+    start_date = args.date
+
 indent_size = int(config.get("operations", "indent_size"))
 if args.indent:
     config.set("operations", "indent_size", str(args.indent))
@@ -146,7 +156,7 @@ if not args.nolog:
 ## MAIN ACTION
 ## -------------------------------------------------------------------------- ##
 
-def main() -> int:
+def main(start_date: Optional[str] = None) -> int:
     try:
         print()
 
@@ -184,4 +194,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(start_date))

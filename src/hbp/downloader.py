@@ -3,6 +3,12 @@
 ## -------------------------------------------------------------------------- ##
 ## @TODO Section!
 ## -------------------------------------------------------------------------- ##
+# - Need to have a skeet-length check function!
+# - Add a forward/backward flag to control the direction of hbp seek.
+# - Add "{team} up X-Y" at moment of HBP
+# - If the HBP triggers a score change, please note!
+# - Download video (filename: 'videos/{game_pk}_{play_id}.txt')
+## -------------------------------------------------------------------------- ##
 
 
 import argparse
@@ -36,6 +42,13 @@ parser.add_argument(
     type=libhbp.basic.verify_file_path,
     default="config/settings.ini",
     help="Override default config with custom settings file (default: '%(default)s').",
+)
+parser.add_argument(
+    "-d",
+    "--date",
+    type=hbp.parse_date_string,
+    default="2025-11-01",
+    help="Date to check for HBP events. Must be in '2023-08-01' format. Defaults to yesterday\'s date (default: '%(default)s').",
 )
 parser.add_argument(
     "-i",
@@ -97,6 +110,10 @@ args = parser.parse_args()
 ## Read and update configuration
 config = ConfigReader(args.config)
 
+start_date = datetime.strftime(datetime.now() - timedelta(days=1), '%Y-%m-%d')
+if args.date:
+    start_date = args.date
+
 indent_size = int(config.get("operations", "indent_size"))
 if args.indent:
     config.set("operations", "indent_size", str(args.indent))
@@ -146,7 +163,7 @@ if not args.nolog:
 ## MAIN ACTION
 ## -------------------------------------------------------------------------- ##
 
-def main() -> int:
+def main(start_date: Optional[str] = None) -> int:
     try:
         print()
 
@@ -159,6 +176,57 @@ def main() -> int:
         print("="*80)
         start_time = time.time()
 
+        found_hbp_events = False
+        while not found_hbp_events:
+            print()
+            print(f'Checking {start_date} for games...', end='')
+            mlb_games = hbp.get_mlb_games_for_date(start_date)
+            print(f'found {len(mlb_games)}.')
+            if double_verbose:
+                pprint.pprint(mlb_games)
+
+            if len(mlb_games) == 0:
+                start_date = hbp.subtract_one_day_from_date(start_date)
+                continue
+
+            for index, game in enumerate(mlb_games):
+                print()
+                print(f"{index + 1}. {game['teams']['away']['team']['name']} at {game['teams']['home']['team']['name']} ", end='')
+                if verbose:
+                    print(f"[game_pk = {game['gamePk']}]", end='')
+                print()
+
+                game_deets = hbp.get_mlb_game_deets(game, verbose)
+
+
+                if test_mode and index > 1:
+                    break
+
+
+                hbp_events = hbp.get_mlb_hit_by_pitch_events_from_single_game(game, verbose)
+                if hbp_events is None or len(hbp_events) == 0:
+                    print(f"{' '*indent_size}👍 Nobody got hit!")
+                    skeet_filename = hbp.write_skeet_text(game_deets, [], skeet_dir, verbose)
+                    print(f"{' '*indent_size}Skeet filename: {skeet_filename}")
+                    continue
+
+                if double_verbose or verbose:
+                    pprint.pprint(hbp_events)
+
+                for jndex, event in enumerate(hbp_events):
+                    if verbose:
+                        print(f"{' '*indent_size}Play ID: {event['play_id']}")
+                    print(f"⚾💥 {event['description']}")
+                    print(f"{' '*indent_size} Batter:  {hbp.build_mlb_player_display_string(event['batter'], verbose)}")
+                    print(f"{' '*indent_size} Pitcher: {hbp.build_mlb_player_display_string(event['pitcher'], verbose)}")
+
+                    print(f"{' '*indent_size} Count:   {hbp.build_hbp_event_count(event['at_bat'])}")
+                    print(f"{' '*indent_size} Pitch:   {hbp.build_hbp_event_pitch(event['at_bat'])}")
+                    if event['play_id'] is None or event['play_id'] == '':
+                        print(f"{' '*indent_size}Video unavailable.")
+                    print()
+                    skeet_filename = hbp.write_skeet_text(game_deets, event, skeet_dir, verbose)
+                    print(f"{' '*indent_size}Skeet filename: {skeet_filename}")
 
 
 
@@ -167,7 +235,8 @@ def main() -> int:
 
 
 
-
+            found_hbp_events = True
+            print()
 
         print()
         end_time = time.time()
@@ -184,4 +253,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(start_date))
