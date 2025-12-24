@@ -137,6 +137,8 @@ def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optio
                 "team": game['teams']['away']['team']['name'] if play["about"]["halfInning"] == "bottom" else game['teams']['home']['team']['name']
             },
             "at_bat": {
+                'home_score'  : play['result']['homeScore'],
+                'away_score'  : play['result']['awayScore'],
                 'balls'       : play['playEvents'][-1]["count"]["balls"],
                 'strikes'     : play['playEvents'][-1]["count"]["strikes"],
                 'outs_when_up': play['playEvents'][-1]["count"]["outs"],
@@ -144,9 +146,9 @@ def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optio
                 'half_inning' : play["about"]["halfInning"],
                 'start_speed' : play['playEvents'][-1]['pitchData']['startSpeed'],
                 'end_speed'   : play['playEvents'][-1]['pitchData']['endSpeed'],
+                'plate_x'     : play['playEvents'][-1]['pitchData']['coordinates']['pX'],   ## in feet!
+                'plate_z'     : play['playEvents'][-1]['pitchData']['coordinates']['pZ'],   ## in feet!
                 'pitch_name'  : play['playEvents'][-1]['details']['type']['description'],
-                'home_score'  : play['result']['homeScore'],
-                'away_score'  : play['result']['awayScore'],
             },
             "description": play['result']['description'],
         })

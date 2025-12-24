@@ -159,7 +159,7 @@ def main() -> int:
         db_file_path = Path(db_dir, db_filename)
         print(f"Writing to {db_table} to file '{db_file_path}'.")
 
-        with SQLiteManager(db_filename) as db: 
+        with SQLiteManager(db_file_path) as db: 
             db.insert_hbpdata(str(uuid.uuid4()), 111111, 222222, 333333, 86.7, 3.14, 6.28)
             db.insert_hbpdata(str(uuid.uuid4()), 444444, 555555, 666666, 92.1, 14.5, 9.01)
             db.insert_hbpdata(str(uuid.uuid4()), 777777, 888888, 999999, 95.5, 7.77, 19.77)

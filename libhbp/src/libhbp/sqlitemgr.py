@@ -15,17 +15,17 @@ class SQLiteManager:
                 batter_id INTEGER NOT NULL,
                 end_speed REAL NOT NULL,
                 x_pos REAL NOT NULL,
-                y_pos REAL NOT NULL
+                z_pos REAL NOT NULL
             )
         """)
         self.conn.commit()
 
-    def insert_hbpdata(self, play_id: str, game_pk: int, pitcher_id: int, batter_id: int, end_speed: float, x_pos: float, y_pos: float) -> bool:
+    def insert_hbpdata(self, play_id: str, game_pk: int, pitcher_id: int, batter_id: int, end_speed: float, x_pos: float, z_pos: float) -> bool:
         insert_result = False
         try:
             self.cursor.execute(
-                "INSERT INTO hbpdata (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, y_pos) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, y_pos)
+                "INSERT INTO hbpdata (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos)
             )
             self.conn.commit()
             insert_result = True
@@ -45,7 +45,6 @@ class SQLiteManager:
 
     def close_connection(self):
         self.conn.close()
-        print("Sqlite3 database connection closed.")
 
     def __enter__(self):
         return self

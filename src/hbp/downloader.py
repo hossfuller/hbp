@@ -3,10 +3,6 @@
 ## -------------------------------------------------------------------------- ##
 ## @TODO Section!
 ## -------------------------------------------------------------------------- ##
-# - Need to have a skeet-length check function!
-# - Add a forward/backward flag to control the direction of hbp seek.
-# - Add "{team} up X-Y" at moment of HBP
-# - If the HBP triggers a score change, please note!
 ## -------------------------------------------------------------------------- ##
 
 
@@ -21,11 +17,12 @@ from . import func_general as gen
 from . import func_baseball as bb
 from . import func_skeet as sk
 
-import libhbp.basic
+import libhbp.basic as libhbp
 from libhbp.configurator import ConfigReader
 from libhbp.logger import PrintLogger
 
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
 
 
@@ -40,7 +37,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-c",
     "--config",
-    type=libhbp.basic.verify_file_path,
+    type=libhbp.verify_file_path,
     default="config/settings.ini",
     help="Override default config with custom settings file (default: '%(default)s').",
 )
@@ -52,6 +49,13 @@ parser.add_argument(
     help="Date to check for HBP events. Must be in '2023-08-01' format. Defaults to yesterday\'s date (default: '%(default)s').",
 )
 parser.add_argument(
+    "-f",
+    "--forward",
+    action="store_true",
+    default=None,
+    help="Force HBP seek to go forward in time instead of the default backward.",
+)
+parser.add_argument(
     "-n",
     "--nolog",
     action="store_true",
@@ -61,16 +65,28 @@ parser.add_argument(
 parser.add_argument(
     "-p",
     "--plot-dir",
-    type=libhbp.basic.verify_directory_path,
+    type=libhbp.verify_directory_path,
     default='plots',
     help="Directory storing plots.",
 )
 parser.add_argument(
     "-s",
     "--skeet-dir",
-    type=libhbp.basic.verify_directory_path,
+    type=libhbp.verify_directory_path,
     default='skeets',
     help="Directory storing skeet text.",
+)
+parser.add_argument(
+    "--skip-spring-training",
+    action="store_true",
+    default=None,
+    help="Skip spring training games.",
+)
+parser.add_argument(
+    "--skip-video",
+    action="store_true",
+    default=None,
+    help="Skip downloading videos.",
 )
 parser.add_argument(
     "-t",
@@ -95,7 +111,7 @@ parser.add_argument(
 parser.add_argument(
     "-z",
     "--video-dir",
-    type=libhbp.basic.verify_directory_path,
+    type=libhbp.verify_directory_path,
     default='videos',
     help="Directory storing video files.",
 )
@@ -109,6 +125,10 @@ start_date = datetime.strftime(datetime.now() - timedelta(days=1), '%Y-%m-%d')
 if args.date:
     start_date = args.date
 
+forward = False
+if args.forward:
+    forward = True
+
 plot_dir = config.get("paths", "plot_dir")
 if args.plot_dir:
     config.set("paths", "plot_dir", args.plot_dir)
@@ -118,6 +138,14 @@ skeet_dir = config.get("paths", "skeet_dir")
 if args.skeet_dir:
     config.set("paths", "skeet_dir", args.skeet_dir)
     skeet_dir = args.skeet_dir
+
+skip_spring_training = False
+if args.skip_spring_training:
+    skip_spring_training = True
+
+skip_video_download = False
+if args.skip_video:
+    skip_video_download = True
 
 video_dir = config.get("paths", "video_dir")
 if args.video_dir:
@@ -148,6 +176,13 @@ if not args.nolog:
         config.get("logging", "downloader_prefix"),
     )
 
+## Other stuff that we can't set on the command line
+db_table     = config.get("database", "hbp_table")
+db_file_path = Path(
+    config.get("paths", "db_dir"), 
+    config.get("database", "hbp_db_filename")
+)
+
 
 ## -------------------------------------------------------------------------- ##
 ## MAIN ACTION
@@ -176,15 +211,19 @@ def main(start_date: Optional[str] = None) -> int:
                 pprint.pprint(mlb_games)
 
             if len(mlb_games) == 0:
-                start_date = gen.subtract_one_day_from_date(start_date)
+                if forward:
+                    start_date = gen.add_one_day_to_date(start_date)
+                else:
+                    start_date = gen.subtract_one_day_from_date(start_date)
                 continue
 
             for index, game in enumerate(mlb_games):
+                if skip_spring_training and game['seriesDescription'].lower() == const.GAME_TYPES['S'].lower():
+                    print(f"    Skipping a {const.GAME_TYPES['S'].lower()} game")
+                    continue
+
                 print()
                 game_deets = bb.get_mlb_game_deets(game, double_verbose)
-
-                # if test_mode and index > 1:
-                #     break
 
                 hbp_events = bb.get_mlb_hit_by_pitch_events_from_single_game(game, double_verbose)
                 if hbp_events is None or len(hbp_events) == 0:
@@ -205,24 +244,25 @@ def main(start_date: Optional[str] = None) -> int:
                     skeet_text = sk.read_skeet_text(skeet_filename)
                     print(f"{skeet_text}")
 
-                    if event['play_id'] is None or event['play_id'] == '':
-                        print(f"😢 Video unavailable.")
-                    else:
-                        ## download video
-                        if test_mode:
-                            print("Pretending to download video....")
+                    if not skip_video_download:
+                        if event['play_id'] is None or event['play_id'] == '':
+                            print(f"😢 Video unavailable.")
                         else:
-                            video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], video_dir, verbose)
-                            print(f"VIDEO: {video_filename}")
+                            ## download video
+                            if test_mode:
+                                print("Pretending to download video....")
+                            else:
+                                video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], video_dir, verbose)
+                                print(f"VIDEO: {video_filename}")
 
-
-
-
-
-
+                    dbinsert_result = gen.safe_dbinsert(db_file_path, db_table, game_deets, event)
+                    if dbinsert_result:
+                        print("👍 HBP added to database.")
+                    else:
+                        print("🤷‍♂️ Can't add HBP to database because it's already there.")
+                    print()
 
             found_hbp_events = True
-            print()
 
         print()
         end_time = time.time()

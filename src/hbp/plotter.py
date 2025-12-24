@@ -16,7 +16,7 @@ from . import func_general as gen
 from . import func_baseball as bb
 from . import func_skeet as sk
 
-import libhbp.basic
+import libhbp.basic as libhbp
 from libhbp.configurator import ConfigReader
 from libhbp.logger import PrintLogger
 
@@ -35,7 +35,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-c",
     "--config",
-    type=libhbp.basic.verify_file_path,
+    type=libhbp.verify_file_path,
     default="config/settings.ini",
     help="Override default config with custom settings file (default: '%(default)s').",
 )
@@ -55,14 +55,14 @@ parser.add_argument(
 parser.add_argument(
     "-p",
     "--plot-dir",
-    type=libhbp.basic.verify_directory_path,
+    type=libhbp.verify_directory_path,
     default='plots',
     help="Directory storing plots.",
 )
 parser.add_argument(
     "-s",
     "--skeet-dir",
-    type=libhbp.basic.verify_directory_path,
+    type=libhbp.verify_directory_path,
     default='skeets',
     help="Directory storing skeet text.",
 )
@@ -89,7 +89,7 @@ parser.add_argument(
 parser.add_argument(
     "-z",
     "--video-dir",
-    type=libhbp.basic.verify_directory_path,
+    type=libhbp.verify_directory_path,
     default='videos',
     help="Directory storing video files.",
 )
