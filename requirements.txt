@@ -5,8 +5,8 @@
 ## General operation
 beautifulsoup4
 colorama
-./libhbp
 lxml
+mysql-connector-python
 numpy
 pandas
 pybaseball
@@ -15,6 +15,7 @@ tqdm
 Unidecode
 
 ## Debugging, Documentation, etc.
+build
 black
 mypy
 no_implicit_optional

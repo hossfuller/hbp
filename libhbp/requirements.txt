@@ -1,7 +1,0 @@
-black
-build
-colorama
-mysql-connector-python
-no_implicit_optional
-mypy
-pipreqs

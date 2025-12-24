@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
+import argparse
 import os
 import pprint
 import requests
-import time
 
 from bs4 import BeautifulSoup
 from datetime import datetime, date, timedelta
@@ -12,78 +12,7 @@ from tqdm import tqdm
 from typing import Optional
 
 from . import constants as const
-from . import func_baseball as bb
-
-import libhbp.basic as libhbp
-from libhbp.sqlitemgr import SQLiteManager
-
-
-## -------------------------------------------------------------------------- ##
-## DATABASE FUNCTIONS
-## -------------------------------------------------------------------------- ##
-
-def has_already_been_skeeted(play_id: str, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
-    already_skeeted = False
-    with SQLiteManager(dbfile) as db: 
-        select_data = db.get_hbpdata_data(
-            f"SELECT * FROM {dbtable} WHERE play_id = ?",
-            [play_id]
-        )
-    if len(select_data) == 1 and select_data[0][9] == 1:
-        already_skeeted = True
-    return already_skeeted
-
-
-def remove_row(play_id: str, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
-    deleted = False
-    with SQLiteManager(dbfile) as db: 
-        delete_data = db.update_hbpdata_data(
-            f"DELETE FROM {dbtable} WHERE play_id = ?",
-            [play_id]
-        )
-        if delete_data == 0 or delete_data == 1:
-            deleted = True
-        else:
-            raise Exception("More than one entry was deleted! THIS SHOULDN'T HAPPEN.")
-    return deleted
-
-
-def safe_dbinsert(game: list, event: list, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
-    safely_inserted = False
-    with SQLiteManager(dbfile) as db: 
-        select_data = db.get_hbpdata_data(
-            f"SELECT * FROM {dbtable} WHERE play_id = ?",
-            [event['play_id']]
-        )
-        if len(select_data) == 0:
-            # print("Safe to insert!")
-            db.insert_hbpdata(
-                event['play_id'],              # play_id: str
-                game['game_pk'],               # game_pk: str
-                event['pitcher']['id'],        # pitcher_id: str
-                event['batter']['id'],         # batter_id: str
-                event['at_bat']['end_speed'],  # end_speed: float
-                event['at_bat']['plate_x'],    # x_pos: float
-                event['at_bat']['plate_z'],    # z_pos: float
-            )
-            safely_inserted = True
-    return safely_inserted
-
-
-def set_video_as_downloaded(play_id: str, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
-    marked = False
-    with SQLiteManager(dbfile) as db: 
-        update_data = db.update_hbpdata_data(
-            f"UPDATE {dbtable} SET downloaded = 1 WHERE play_id = ?",
-            [play_id]
-        )
-        if update_data == 0:
-            raise Exception(f"Play ID {play_id} doesn't exist in the database!")
-        elif update_data == 1:
-            marked = True
-        else:
-            raise Exception("More than one entry was updated! THIS SHOULDN'T HAPPEN.")
-    return marked
+from .sqlitemgr import SQLiteManager
 
 
 ## -------------------------------------------------------------------------- ##

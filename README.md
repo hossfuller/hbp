@@ -50,7 +50,7 @@ How do you install python on Windows 11?
 
 ```sh
 python -m venv env
-.\env\Scripts\Activate.ps1
+.\env\bin\Activate.ps1  ## or .\env\Scripts\Activate.ps1
 
 python -m pip install --upgrade pip
 python -m pip install pipreqs black mypy
@@ -64,7 +64,23 @@ pip install -r requirements.txt
 <!-- --------------------------------------------------------------------------- -->
 
 
+## TO-DO
+
+- [x] Move `libhbp` to the main `src/hbp` directory.
+- [ ] Break the `downloader.py` script into `dbpopulator.py` and `downloader.py` scripts.
+- [ ] New `downloader.py` script should update the database when it downloads a video.
+- [ ] How do I pass a keyboard interrupt through a `.bat`/`.sh` script to the main python executable?
+- [ ] Make `SQLiteManager` receive a `create table` query so I don't have to make edits in the class itself.
+- [ ] Store the `CREATE TABLE` in the constants.py file.
+
+
+
+<!-- --------------------------------------------------------------------------- -->
+
+
 ## Inspirations
 
 - [coperyan/mlb-videos](https://github.com/coperyan/mlb-videos)
 - [dylandru/BSav_Scraper_Vid](https://github.com/dylandru/BSav_Scraper_Vid)
+
+

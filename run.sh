@@ -12,7 +12,7 @@ cd "$(dirname "$0")"
 
 ## Set Python path and run the downloader with all command line arguments.
 export PYTHONPATH="$(pwd)"
-python3 -m src.hbp.downloader "$@"
+# python3 -m src.hbp.downloader "$@"
 # python3 -m src.hbp.plotter "$@"
 # python3 -m src.hbp.skeeter "$@"
 

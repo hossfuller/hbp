@@ -7,7 +7,7 @@ import platform
 ## -------------------------------------------------------------------------- ##
 
 # fmt: off
-DEFAULT_CONFIG_INI_FILE = "settings.ini"
+DEFAULT_CONFIG_INI_FILE = "config/settings.ini"
 SYSTEM_NAME             = platform.system()
 # fmt: on
 

@@ -12,6 +12,7 @@ class SQLiteManager:
             CREATE TABLE IF NOT EXISTS hbpdata (
                 play_id TEXT PRIMARY KEY,
                 game_pk INTEGER NOT NULL,
+                game_date DATE NOT NULL,
                 pitcher_id INTEGER NOT NULL,
                 batter_id INTEGER NOT NULL,
                 end_speed REAL,
@@ -24,12 +25,16 @@ class SQLiteManager:
         """)
         self.conn.commit()
 
-    def insert_hbpdata(self, play_id: str, game_pk: int, pitcher_id: int, batter_id: int, end_speed: float, x_pos: float, z_pos: float, downloaded: Optional[bool] = False) -> bool:
+    def insert_hbpdata(self, play_id: str, game_pk: int, game_date: str, pitcher_id: int, batter_id: int, end_speed: float, x_pos: float, z_pos: float) -> bool:
         insert_result = False
         try:
-            self.cursor.execute(
-                "INSERT INTO hbpdata (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos, downloaded) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos, downloaded)
+            self.cursor.execute(f"""
+                INSERT INTO hbpdata 
+                    (play_id, game_pk, game_date, pitcher_id, batter_id, end_speed, x_pos, z_pos) 
+                VALUES 
+                    (?, ?, ?, ?, ?, ?, ?, ?)
+                """, 
+                (play_id, game_pk, game_date, pitcher_id, batter_id, end_speed, x_pos, z_pos)
             )
             self.conn.commit()
             insert_result = True
