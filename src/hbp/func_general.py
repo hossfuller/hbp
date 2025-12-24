@@ -22,7 +22,33 @@ from libhbp.sqlitemgr import SQLiteManager
 ## DATABASE FUNCTIONS
 ## -------------------------------------------------------------------------- ##
 
-def safe_dbinsert(dbfile: str, dbtable: str, game: list, event: list) -> bool:
+def has_already_been_skeeted(play_id: str, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
+    already_skeeted = False
+    with SQLiteManager(dbfile) as db: 
+        select_data = db.get_hbpdata_data(
+            f"SELECT * FROM {dbtable} WHERE play_id = ?",
+            [play_id]
+        )
+    if len(select_data) == 1 and select_data[0][9] == 1:
+        already_skeeted = True
+    return already_skeeted
+
+
+def remove_row(play_id: str, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
+    deleted = False
+    with SQLiteManager(dbfile) as db: 
+        delete_data = db.update_hbpdata_data(
+            f"DELETE FROM {dbtable} WHERE play_id = ?",
+            [play_id]
+        )
+        if delete_data == 0 or delete_data == 1:
+            deleted = True
+        else:
+            raise Exception("More than one entry was deleted! THIS SHOULDN'T HAPPEN.")
+    return deleted
+
+
+def safe_dbinsert(game: list, event: list, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
     safely_inserted = False
     with SQLiteManager(dbfile) as db: 
         select_data = db.get_hbpdata_data(
@@ -44,7 +70,7 @@ def safe_dbinsert(dbfile: str, dbtable: str, game: list, event: list) -> bool:
     return safely_inserted
 
 
-def set_video_as_downloaded(dbfile: str, dbtable: str, play_id: str) -> bool:
+def set_video_as_downloaded(play_id: str, dbfile: str, dbtable: Optional[str] = 'hbpdata') -> bool:
     marked = False
     with SQLiteManager(dbfile) as db: 
         update_data = db.update_hbpdata_data(
@@ -58,8 +84,6 @@ def set_video_as_downloaded(dbfile: str, dbtable: str, play_id: str) -> bool:
         else:
             raise Exception("More than one entry was updated! THIS SHOULDN'T HAPPEN.")
     return marked
-
-
 
 
 ## -------------------------------------------------------------------------- ##

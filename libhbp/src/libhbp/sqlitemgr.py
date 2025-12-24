@@ -14,9 +14,9 @@ class SQLiteManager:
                 game_pk INTEGER NOT NULL,
                 pitcher_id INTEGER NOT NULL,
                 batter_id INTEGER NOT NULL,
-                end_speed REAL NOT NULL,
-                x_pos REAL NOT NULL,
-                z_pos REAL NOT NULL,
+                end_speed REAL,
+                x_pos REAL,
+                z_pos REAL,
                 downloaded INTEGER NOT NULL DEFAULT 0,
                 analyzed INTEGER NOT NULL DEFAULT 0,
                 skeeted INTEGER NOT NULL DEFAULT 0

@@ -52,14 +52,14 @@ def get_mlb_game_deets(game: list, verbose_bool: Optional[bool] = False) -> list
     game_deets = {
         'home': {
             'team'       : game['teams']['home']['team']['name'],
-            'final_score': game['teams']['home']['score'],
+            'final_score': game['teams']['home']['score'] if 'score' in game['teams']['home'] else None,
             'wins'       : game['teams']['home']['leagueRecord']['wins'],
             'losses'     : game['teams']['home']['leagueRecord']['losses'],
             'pct'        : game['teams']['home']['leagueRecord']['pct'],
         },
         'away': {
             'team'       : game['teams']['away']['team']['name'],
-            'final_score': game['teams']['away']['score'],
+            'final_score': game['teams']['away']['score'] if 'score' in game['teams']['away'] else None,
             'wins'       : game['teams']['away']['leagueRecord']['wins'],
             'losses'     : game['teams']['away']['leagueRecord']['losses'],
             'pct'        : game['teams']['away']['leagueRecord']['pct'],
@@ -144,11 +144,11 @@ def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optio
                 'outs_when_up': play['playEvents'][-1]["count"]["outs"],
                 'inning'      : play["about"]["inning"],
                 'half_inning' : play["about"]["halfInning"],
-                'start_speed' : play['playEvents'][-1]['pitchData']['startSpeed'],
-                'end_speed'   : play['playEvents'][-1]['pitchData']['endSpeed'],
-                'plate_x'     : play['playEvents'][-1]['pitchData']['coordinates']['pX'],   ## in feet!
-                'plate_z'     : play['playEvents'][-1]['pitchData']['coordinates']['pZ'],   ## in feet!
-                'pitch_name'  : play['playEvents'][-1]['details']['type']['description'],
+                'start_speed' : play['playEvents'][-1]['pitchData']['startSpeed'] if 'startSpeed' in play['playEvents'][-1]['pitchData'] else None,
+                'end_speed'   : play['playEvents'][-1]['pitchData']['endSpeed'] if 'endSpeed' in play['playEvents'][-1]['pitchData'] else None,
+                'plate_x'     : play['playEvents'][-1]['pitchData']['coordinates']['pX'] if 'pX' in play['playEvents'][-1]['pitchData']['coordinates'] else None,   ## in feet!
+                'plate_z'     : play['playEvents'][-1]['pitchData']['coordinates']['pZ'] if 'pZ' in play['playEvents'][-1]['pitchData']['coordinates'] else None,   ## in feet!
+                'pitch_name'  : play['playEvents'][-1]['details']['type']['description'] if 'type' in play['playEvents'][-1]['details'] else None,
             },
             "description": play['result']['description'],
         })

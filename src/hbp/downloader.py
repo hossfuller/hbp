@@ -78,6 +78,17 @@ parser.add_argument(
     help="Enables really verbose output.",
 )
 parser.add_argument(
+    "-a",
+    "--autopilot",
+    action="store_true",
+    help="Go until a keyboard interrupt is caught.",
+)
+parser.add_argument(
+    "--only-db-insert",
+    action="store_true",
+    help="Only updates the database for each HBP.",
+)
+parser.add_argument(
     "--skip-db-insert",
     action="store_true",
     help="Skips updating the database for each HBP.",
@@ -100,6 +111,14 @@ if args.date:
 backward = False
 if args.backward:
     backward = True
+
+autopilot = False
+if args.autopilot:
+    autopilot = True
+
+only_db_insert = False
+if args.only_db_insert:
+    only_db_insert = True
 
 skip_db_insert = False
 if args.skip_db_insert:
@@ -162,46 +181,60 @@ def main(start_date: Optional[str] = None) -> int:
         print("="*80)
         start_time = time.time()
 
+        total_hbp_events = 0
         found_hbp_events = False
         while not found_hbp_events:
             print()
             print(f'** Checking {start_date} for games...', end='')
             mlb_games = bb.get_mlb_games_for_date(start_date)
-            print(f'found {len(mlb_games)}. **')
+            print(f'found {len(mlb_games)} games that day. **')
             if double_verbose:
                 pprint.pprint(mlb_games)
 
-            if len(mlb_games) == 0:
-                if backward:
-                    start_date = gen.add_one_day_to_date(start_date)
-                else:
-                    start_date = gen.subtract_one_day_from_date(start_date)
-                continue
-
+            ## "GAME" FOR LOOP
+            hbp_count = 0
             for index, game in enumerate(mlb_games):
                 print()
                 game_deets = bb.get_mlb_game_deets(game, double_verbose)
 
                 hbp_events = bb.get_mlb_hit_by_pitch_events_from_single_game(game, double_verbose)
                 if hbp_events is None or len(hbp_events) == 0:
-                    skeet_filename = sk.write_desc_skeet_text(game_deets, [], skeet_dir, double_verbose)
-                    if verbose:
-                        print(f"{index + 1}. Skeet File: {skeet_filename}")
-                    skeet_text = sk.read_skeet_text(skeet_filename)
-                    print(f"{skeet_text}")
-                    continue
+                    if not only_db_insert:
+                        skeet_filename = sk.write_desc_skeet_text(game_deets, [], skeet_dir, double_verbose)
+                        if verbose:
+                            print(f"{index + 1}. Skeet File: {skeet_filename}")
+                        skeet_text = sk.read_skeet_text(skeet_filename)
+                        print(f"{skeet_text}")
+                        continue
 
                 if double_verbose:
                     pprint.pprint(hbp_events)
 
+                ## "HBP EVENT" FOR LOOP
                 for jndex, event in enumerate(hbp_events):
+
                     ## Insert into the database first.
                     if not skip_db_insert:
-                        dbinsert_result = gen.safe_dbinsert(db_file_path, db_table, game_deets, event)
-                        if dbinsert_result:
-                            print("👍 HBP added to database.")
-                        else:
-                            print("🤷‍♂️ Can't add HBP to database because it's already there.")
+                        try:
+                            dbinsert_result = gen.safe_dbinsert(game_deets, event, db_file_path)
+                            hbp_count = hbp_count + 1
+
+                            if dbinsert_result:
+                                print(f"    {hbp_count}. 👍 HBP {event['play_id']} added to database.")
+                            else:
+                                ## If it's already in the database, then check 
+                                ## everything's already been skeeted. If so, move on.
+                                print(f"    {hbp_count}. 🦋 HBP {event['play_id']} is already in the database", end='')
+                                if gen.has_already_been_skeeted(event['play_id'], db_file_path):
+                                    print(" and has already been skeeted", end='')
+                                print(".\n")
+                                continue
+                        except KeyboardInterrupt:
+                            gen.remove_row(event['play_id'], db_file_path)
+
+                    ## Looks like someone just wants to populate the database.
+                    if only_db_insert:
+                        continue
 
                     ## Generate skeet
                     skeet_filename = sk.write_desc_skeet_text(game_deets, event, skeet_dir, double_verbose)
@@ -215,7 +248,7 @@ def main(start_date: Optional[str] = None) -> int:
                     if event['play_id'] is None or event['play_id'] == '':
                         print(f"😢 Video unavailable.")
                         ## if there's no video, there's no video.
-                        gen.set_video_as_downloaded(db_file_path, db_table, event['play_id'])
+                        gen.set_video_as_downloaded(event['play_id'], db_file_path)
                     else:
                         ## download video
                         if test_mode:
@@ -226,11 +259,23 @@ def main(start_date: Optional[str] = None) -> int:
                             video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], video_dir, verbose)
                             print(f"VIDEO: {video_filename}")
                             if os.path.exists(video_filename):
-                                gen.set_video_as_downloaded(db_file_path, db_table, event['play_id'])
+                                gen.set_video_as_downloaded(event['play_id'], db_file_path)
 
                     print()
+            
+            print(f"    ⚾💥 There were {hbp_count} total HBP events for this day.")
+            total_hbp_events = total_hbp_events + hbp_count
 
-            found_hbp_events = True
+            if autopilot:
+                if backward:
+                    start_date = gen.subtract_one_day_from_date(start_date)
+                else:
+                    start_date = gen.add_one_day_to_date(start_date)
+            else:
+                found_hbp_events = True
+
+        print()
+        print(f"** Captured {total_hbp_events} during this run.")
 
         print()
         end_time = time.time()
