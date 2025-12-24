@@ -44,6 +44,24 @@ def safe_dbinsert(dbfile: str, dbtable: str, game: list, event: list) -> bool:
     return safely_inserted
 
 
+def set_video_as_downloaded(dbfile: str, dbtable: str, play_id: str) -> bool:
+    marked = False
+    with SQLiteManager(dbfile) as db: 
+        update_data = db.update_hbpdata_data(
+            f"UPDATE {dbtable} SET downloaded = 1 WHERE play_id = ?",
+            [play_id]
+        )
+        if update_data == 0:
+            raise Exception(f"Play ID {play_id} doesn't exist in the database!")
+        elif update_data == 1:
+            marked = True
+        else:
+            raise Exception("More than one entry was updated! THIS SHOULDN'T HAPPEN.")
+    return marked
+
+
+
+
 ## -------------------------------------------------------------------------- ##
 ## DATE FUNCTIONS
 ## -------------------------------------------------------------------------- ##

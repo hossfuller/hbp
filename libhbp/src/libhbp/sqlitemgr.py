@@ -1,4 +1,5 @@
 import sqlite3
+from typing import Optional
 
 class SQLiteManager:
     def __init__(self, db_file):
@@ -15,33 +16,41 @@ class SQLiteManager:
                 batter_id INTEGER NOT NULL,
                 end_speed REAL NOT NULL,
                 x_pos REAL NOT NULL,
-                z_pos REAL NOT NULL
+                z_pos REAL NOT NULL,
+                downloaded INTEGER NOT NULL DEFAULT 0,
+                analyzed INTEGER NOT NULL DEFAULT 0,
+                skeeted INTEGER NOT NULL DEFAULT 0
             )
         """)
         self.conn.commit()
 
-    def insert_hbpdata(self, play_id: str, game_pk: int, pitcher_id: int, batter_id: int, end_speed: float, x_pos: float, z_pos: float) -> bool:
+    def insert_hbpdata(self, play_id: str, game_pk: int, pitcher_id: int, batter_id: int, end_speed: float, x_pos: float, z_pos: float, downloaded: Optional[bool] = False) -> bool:
         insert_result = False
         try:
             self.cursor.execute(
-                "INSERT INTO hbpdata (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos)
+                "INSERT INTO hbpdata (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos, downloaded) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
+                (play_id, game_pk, pitcher_id, batter_id, end_speed, x_pos, z_pos, downloaded)
             )
             self.conn.commit()
             insert_result = True
         except sqlite3.Error as e:
             print(f"An error occurred: {e}")
         return insert_result
+    
+    def get_hbpdata_data(self, query: str, args: list) -> list:
+        self.cursor.execute(query, args)
+        records = self.cursor.fetchall()
+        return records
 
     def read_hbpdata_all(self) -> list:
         self.cursor.execute(f"SELECT * FROM hbpdata")
         records = self.cursor.fetchall()
         return records
     
-    def get_hbpdata_data(self, query: str, args: list) -> list:
+    def update_hbpdata_data(self, query: str,  args: list) -> list:
         self.cursor.execute(query, args)
-        records = self.cursor.fetchall()
-        return records
+        self.conn.commit() 
+        return self.cursor.rowcount
 
     def close_connection(self):
         self.conn.close()
@@ -51,28 +60,3 @@ class SQLiteManager:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close_connection()
-
-## Example usage:
-## db_dir      = config.get("paths", "db_dir")
-## db_filename = config.get("database", "hbp_db_filename")
-## db_table    = config.get("database", "hbp_table")
-## db_file_path = Path(db_dir, db_filename)
-## print(f"Writing to {db_table} to file '{db_file_path}'.")
-
-## with SQLiteManager(db_filename) as db: 
-##     db.insert_hbpdata(str(uuid.uuid4()), 111111, 222222, 333333, 86.7, 3.14, 6.28)
-##     db.insert_hbpdata(str(uuid.uuid4()), 444444, 555555, 666666, 92.1, 14.5, 9.01)
-##     db.insert_hbpdata(str(uuid.uuid4()), 777777, 888888, 999999, 95.5, 7.77, 19.77)
-
-##     all_data = db.read_hbpdata_all()
-##     print("All data:")
-##     pprint.pprint(all_data)
-##     print()
-
-##     select_data = db.get_hbpdata_data(
-##         f"SELECT * FROM {db_table} WHERE game_pk = ?",
-##         [444444]
-##     )
-##     print("Just some of the data:")
-##     pprint.pprint(select_data)
-

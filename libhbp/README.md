@@ -13,6 +13,7 @@ This is a general python library to do things the way I like them done. This pro
     1. [ConfigReader](#configreader)
     1. [DatabaseConnector](#databaseconnector)
     1. [PrintLogger](#printlogger)
+    1. [SQLiteManager](#sqlitemanager)
 
 
 <!-- --------------------------------------------------------------------------- -->
@@ -343,3 +344,43 @@ if not args.nolog:
 ```
 
 From here, unless the `-n` flag is given, logs will be created for this script and written to whatever the `log_dir` is set to.
+
+
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+
+
+<div id='sqlitemanager' />
+
+### SQLiteManager
+
+Currently hard-coded only for HBP data. Doesn't rely on the `ConfigReader` for anything right now, but you may want to insert stuff into your `settings.ini` just in case the day does come when `SQLiteManager` does call upon `ConfigReader`'s services.
+
+Example usage:
+
+```python
+from libhbp.sqlitemgr import SQLiteManager
+
+db_dir      = config.get("paths", "db_dir")
+db_filename = config.get("database", "hbp_db_filename")
+db_table    = config.get("database", "hbp_table")
+db_file_path = Path(db_dir, db_filename)
+print(f"Writing to {db_table} to file '{db_file_path}'.")
+
+with SQLiteManager(db_filename) as db: 
+    db.insert_hbpdata(str(uuid.uuid4()), 111111, 222222, 333333, 86.7, 3.14, 6.28)
+    db.insert_hbpdata(str(uuid.uuid4()), 444444, 555555, 666666, 92.1, 14.5, 9.01)
+    db.insert_hbpdata(str(uuid.uuid4()), 777777, 888888, 999999, 95.5, 7.77, 19.77)
+
+    all_data = db.read_hbpdata_all()
+    print("All data:")
+    pprint.pprint(all_data)
+    print()
+
+    select_data = db.get_hbpdata_data(
+        f"SELECT * FROM {db_table} WHERE game_pk = ?",
+        [444444]
+    )
+    print("Just some of the data:")
+    pprint.pprint(select_data)
+```
