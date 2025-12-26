@@ -1,21 +1,34 @@
 #!/usr/bin/env python3
 
 ## -------------------------------------------------------------------------- ##
-## @TODO Section!
+## HBP Downloader
+## Using statcast data, builds a skeet and downloads the video. Also updates
+## the HBP database for the plotter script.
 ## -------------------------------------------------------------------------- ##
 
 
 import argparse
+import json
+import os
 import pprint
+# import requests
 import sys
 import time
 
 # Import application modules
+from .libhbp import basic
+from .libhbp import constants as const
+from .libhbp import func_baseball as bb
+from .libhbp import func_database as dbmgr
 from .libhbp import func_general as gen
+from .libhbp import func_skeet as sk
+
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
-from datetime import datetime, timedelta
+from atproto import Client, client_utils
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 
@@ -28,17 +41,11 @@ parser = argparse.ArgumentParser(
     description="Posts skeets and videos to Bluesky."
 )
 parser.add_argument(
-    "-c",
-    "--config",
-    type=libhbp.verify_file_path,
-    default="config/settings.ini",
-    help="Override default config with custom settings file (default: '%(default)s').",
-)
-parser.add_argument(
-    "-d",
-    "--date",
-    type=gen.parse_date_string,
-    help='Date to check for HBP events. Must be in "2023-08-01" format. Defaults to yesterday\'s date.'
+    "-p",
+    "--num-posts",
+    type=int,
+    default=1,
+    help="Number of HBP events to post.",
 )
 parser.add_argument(
     "-n",
@@ -46,20 +53,6 @@ parser.add_argument(
     action="store_true",
     default=None,
     help="Disable logging.",
-)
-parser.add_argument(
-    "-p",
-    "--plot-dir",
-    type=libhbp.verify_directory_path,
-    default='plots',
-    help="Directory storing plots.",
-)
-parser.add_argument(
-    "-s",
-    "--skeet-dir",
-    type=libhbp.verify_directory_path,
-    default='skeets',
-    help="Directory storing skeet text.",
 )
 parser.add_argument(
     "-t",
@@ -81,37 +74,16 @@ parser.add_argument(
     default=None,
     help="Enables really verbose output.",
 )
-parser.add_argument(
-    "-z",
-    "--video-dir",
-    type=libhbp.verify_directory_path,
-    default='videos',
-    help="Directory storing video files.",
-)
 
 args = parser.parse_args()
 
 ## Read and update configuration
-config = ConfigReader(args.config)
+config = ConfigReader(basic.verify_file_path(basic.sanitize_path(const.DEFAULT_CONFIG_INI_FILE)))
 
-start_date = datetime.strftime(datetime.now() - timedelta(days=1), '%Y-%m-%d')
-if args.date:
-    start_date = args.date
-
-plot_dir = config.get("paths", "plot_dir")
-if args.plot_dir:
-    config.set("paths", "plot_dir", args.plot_dir)
-    plot_dir = args.plot_dir
-
-skeet_dir = config.get("paths", "skeet_dir")
-if args.skeet_dir:
-    config.set("paths", "skeet_dir", args.skeet_dir)
-    skeet_dir = args.skeet_dir
-
-video_dir = config.get("paths", "video_dir")
-if args.video_dir:
-    config.set("paths", "video_dir", args.video_dir)
-    video_dir = args.video_dir
+num_posts = config.get("bluesky", "num_posts_per_run")
+if args.num_posts:
+    config.set("bluesky", "num_posts_per_run", str(args.num_posts))
+    num_posts = args.num_posts
 
 test_mode = bool(int(config.get("operations", "test_mode")))
 if args.test_mode:
@@ -137,12 +109,17 @@ if not args.nolog:
         config.get("logging", "skeeter_prefix"),
     )
 
+## Directories
+plot_dir  = config.get("paths", "plot_dir")
+skeet_dir = config.get("paths", "skeet_dir")
+video_dir = config.get("paths", "video_dir")
+
 
 ## -------------------------------------------------------------------------- ##
 ## MAIN ACTION
 ## -------------------------------------------------------------------------- ##
 
-def main(start_date: Optional[str] = None) -> int:
+def main() -> int:
     try:
         print()
 
@@ -151,19 +128,174 @@ def main(start_date: Optional[str] = None) -> int:
             print()
 
         print("="*80)
-        print(f" {config.get('app', 'name')} ~~> 🦋 Bluesky Skeeter")
+        print(f" ⚾ {config.get('app', 'name')} ⚾ ~~> 🦋 Bluesky Skeeter")
         print("="*80)
         start_time = time.time()
 
+        ## -----------------------
+        ## Bluesky Setup
+        ## -----------------------
+        # bsky_time = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        bsky_user = config.get("bluesky", "username")
+        bsky_pass = None
+        pwd_file = Path(const.DEFAULT_CONFIG_DIRECTORY, config.get("bluesky", "pwd_file"))
+        with open(pwd_file, 'r', encoding='utf-8') as f:
+            bsky_pass = f.read()
+    
+        print(f"🔌 Connecting to bluesky account for {bsky_user}...")
+        client = Client()
+        try:
+            profile = client.login(bsky_user, bsky_pass)
+        except:
+            raise Exception("❌ Unable to connect to Bluesky!!")        
+
+        print(f"👍 Connected as '{profile.handle}'.")
+        if double_verbose:
+            print()
+            pprint.pprint(profile)
+        print()
+
+        ## -----------------------
+        ## Skeet loop
+        ## -----------------------
+        skeet_dir_files = sorted(os.listdir(skeet_dir))
+        if verbose:
+            pprint.pprint(skeet_dir_files)
+        
+        skeet_counter = 0
+        while (skeet_counter < num_posts):
+            current_skeet       = skeet_dir_files.pop(-1)
+            full_skeet_filename = Path(skeet_dir, current_skeet)
+            skeet_root, ext     = os.path.splitext(current_skeet)
+            skeet_parts         = skeet_root.split('_')
+
+            ## Not a file we want to work with
+            if not skeet_parts[0].isdigit():
+                print()
+                continue
+
+            game_pk = skeet_parts[0]
+            play_id = skeet_parts[1]
+            print(f"⚾ Game = {game_pk}, Play ID = {play_id}")
+
+            if skeet_parts[1] == "clean":
+                ## We don't skeet out games where there are no HBP events.
+                print(f"  😞 Nobody got hit during this game. Skipping.\n")
+                os.remove(full_skeet_filename)
+                continue
+            elif skeet_parts[1] == "analyze":
+                print(f"  😒 Current file is analysis information. Skipping.\n")
+                continue
+
+            ## Now check if it's already been skeeted. If so, remove all files.
+            if dbmgr.has_been_skeeted(play_id):
+                print(f"  🤨 This HBP has already been skeeted!\n")
+                sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
+                continue
+
+            ## At this point, let's start building the skeet(s).
+            ## 1. Get skeet text.
+            if verbose:
+                print(f"{i + 1}. Skeet File: {full_skeet_filename}")
+            skeet_text = sk.read_skeet_text(full_skeet_filename)
+            print(f"{skeet_text}")
+
+            ## 2. Get video text.
+            video_filepath = Path(video_dir, f"{game_pk}_{play_id}.mp4")
+            if not dbmgr.has_been_downloaded(play_id) and not os.path.exists(video_filepath):
+                ## Don't add a video!
+                video_filepath = None
+                print(f"  ⛔ No HBP video associated with this HBP!")
+            elif not dbmgr.has_been_downloaded(play_id) and os.path.exists(video_filepath):
+                ## File exists but hasn't been marked as downloaded!
+                dbmgr.set_download_flag(play_id)
+                print(f"  🤨 HBP video has been downloaded but not marked so in the database.")
+            elif dbmgr.has_been_downloaded(play_id) and not os.path.exists(video_filepath):
+                ## This is an error condition! File is missing.
+                raise Exception(f"❌ Video {video_filepath} is missing!")
+            elif dbmgr.has_been_downloaded(play_id) and os.path.exists(video_filepath):
+                ## File has been marked as downloaded and does exist.
+                video_filepath = gen.find_smallest_video(video_filepath)           
+            
+            if video_filepath:
+                print(f"🎥 Video file: {video_filepath}")
+                ## Unless we see otherwise, we don't need to compress the file 
+                ## to get under some arbitrary upload limit. Delete this once we 
+                ## figure out the post error in the skeeter.py script.
+                # video_size_bytes = os.path.getsize(video_filepath)
+                # if video_size_bytes <= const.SKEETS_VIDEO_LIMIT:
+                #     print(f"🎥 Video file: {video_filepath}")
+                # else:
+                #     print(f"🎥 Video is too big! {video_size_bytes/1024} KB")
+                ##
+
+            ## 3. use atproto client to construct and send skeet
+            post = None
+            try:
+                if video_filepath:
+                    vid_data = None
+                    with open(video_filepath, 'rb') as f:
+                        vid_data = f.read()
+
+                    if vid_data:
+                        print(f"  Video length = {len(vid_data)}")
+                        post = client.send_video(
+                            text=skeet_text,
+                            video=video_filepath,
+                            video_alt=f"A video showing the hit-by-pitch at-bat."
+                        )
+                    else:
+                        raise Exception(f"❌ Unable to read video file {video_filepath}!")
+                else:
+                    post = client.send_post(skeet_text)
+            except:
+                pprint.pprint(post)
+                raise Exception(f"❌ Post of {play_id} failed!")
+                            
+                
+                
+            ## 3. Use bsky API to construct skeet structure in skeets dict.
+            # skeets = list()
+            # skeets.append({
+            #     "$type": "app.bsky.feed.post",
+            #     "text": skeet_text,
+            #     "createdAt": bsky_time,
+            # })
+            
+            ## 4. If the event has been analyzed, build reply skeets with images
+            ## and alt text.
+        #     if dbmgr.has_been_analyzed(play_id):
+        #         ##  - Get analyze skeet text.
+        #         ##  - Get plot files.
+        #         ## Use bsky API to construct analyze skeet structure in skeets dict.
+        #         pass
+            
 
 
+            ## 5. Upload skeet(s)!
+            # parent = None
+            # for index, skeet in enumerate(skeets):
+            #     resp = requests.post(
+            #         bsky_create_record_endpt,
+            #         headers={"Authorization": "Bearer " + session["accessJwt"]},
+            #         json={
+            #             "repo": session["did"],
+            #             "collection": "app.bsky.feed.post",
+            #             "record": skeet,
+            #         },
+            #     )
+            #     print(json.dumps(resp.json(), indent=2))
+            #     resp.raise_for_status()
+            
+            
+            
 
+            ## 6. Clean up!
+            # dbmgr.set_skeeted_flag(play_id)
+            # sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
 
-
-
-
-
-
+            skeet_counter = skeet_counter + 1
+            print()
 
         print()
         end_time = time.time()
@@ -180,4 +312,4 @@ def main(start_date: Optional[str] = None) -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main(start_date))
+    sys.exit(main())

@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
+from pathlib import Path
 
-DEFAULT_CONFIG_INI_FILE = "config/settings.ini"
+DEFAULT_CONFIG_DIRECTORY = "config"
+DEFAULT_CONFIG_INI_FILE  = Path(DEFAULT_CONFIG_DIRECTORY, "settings.ini")
 
 ## ---------------------------------------------------------------------------->
 ## Skeet constants
 ## ---------------------------------------------------------------------------->
 SKEETS_CHAR_LIMIT = 300
+SKEETS_VIDEO_LIMIT = 1000000  ## bytes
 
 
 ## ---------------------------------------------------------------------------->

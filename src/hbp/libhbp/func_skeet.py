@@ -1,25 +1,58 @@
 #!/usr/bin/env python3
 
+import os
 import pprint
 
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from . import basic as basic
 from . import constants as const
 from . import func_baseball as bb
+from .configurator import ConfigReader
+
+
+## -------------------------------------------------------------------------- ##
+## DIRECTORIES CONFIG
+## -------------------------------------------------------------------------- ##
+
+config    = ConfigReader(basic.verify_file_path(basic.sanitize_path(const.DEFAULT_CONFIG_INI_FILE)))
+plot_dir  = config.get("paths", "plot_dir")
+skeet_dir = config.get("paths", "skeet_dir")
+video_dir = config.get("paths", "video_dir")
 
 
 ## -------------------------------------------------------------------------- ##
 ## SKEET FUNCTIONS
 ## -------------------------------------------------------------------------- ##
 
-def delete_skeet_file(filename: str, verbose_bool: Optional[bool] = False) -> bool:
-    '''
-    Stub function that deletes skeet files.
-    Returns true for success, false otherwise.
-    '''
-    return False
+def cleanup_after_skeet(
+    game_pk: int, 
+    play_id: str, 
+    verbose_bool: Optional[bool] = False, 
+    plot_dir: Optional[str] = plot_dir,
+    skeet_dir: Optional[str] = skeet_dir,
+    video_dir: Optional[str] = video_dir
+) -> list:
+    files_removed = list()
+    
+    # for filename in os.listdir(plot_dir):
+    #     pass
+
+    for skeet_file in os.listdir(skeet_dir):
+        if skeet_file.startswith(f"{game_pk}_{play_id}"):
+            skeet_filepath = Path(skeet_dir, skeet_file)
+            # os.remove(skeet_filepath)
+            files_removed.append(skeet_filepath)
+
+    ## Remove video file.
+    video_filepath = Path(video_dir, f"{game_pk}_{play_id}.mp4")
+    if os.path.isfile(video_filepath):
+        # os.remove(video_filepath)
+        files_removed.append(video_filepath)
+
+    return files_removed
 
 
 def read_skeet_text(filename: str, verbose_bool: Optional[bool] = False) -> str:

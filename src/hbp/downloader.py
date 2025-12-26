@@ -14,17 +14,17 @@ import sys
 import time
 
 # Import application modules
+from .libhbp import basic
 from .libhbp import constants as const
+from .libhbp import func_baseball as bb
 from .libhbp import func_database as dbmgr
 from .libhbp import func_general as gen
-from .libhbp import func_baseball as bb
 from .libhbp import func_skeet as sk
-
-from .libhbp import basic
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional
 
 
@@ -213,11 +213,8 @@ def main(start_date: Optional[str] = None) -> int:
                     print(f"{skeet_text}")
                     
                     ## Finally, download the video.    
-                    downloaded = False                
                     if event['play_id'] is None or event['play_id'] == '':
                         print(f"😢 Video unavailable.")
-                        ## If there's no video, mark it as downloaded anyway
-                        downloaded = True    
                     else:
                         ## download video
                         if test_mode:
@@ -225,12 +222,23 @@ def main(start_date: Optional[str] = None) -> int:
                         elif skip_video_dl:
                             pass
                         else:
-                            video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], video_dir, verbose)
+                            video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], verbose)
                             print(f"VIDEO: {video_filename}")
+                            ## Unless we see otherwise, we don't need to 
+                            ## compress the file to get under some arbitrary 
+                            ## upload limit. Delete this once we figure out the
+                            ## post error in the skeeter.py script.
+                            #
+                            # video_size_bytes = os.path.getsize(video_filename)
+                            # print(f"VIDEO: {video_filename} ({video_size_bytes} KB)")
+                            # if video_size_bytes > const.SKEETS_VIDEO_LIMIT:
+                            #     print(f" 🎥 Too big to upload! Compressing...")
+                            #     video_filename_small = gen.compress_video(video_filename, 1000)
+                            #     print(f" 🎥 Compressed file saved to {video_filename_small}.")
+                            ##
+                            
                             if os.path.exists(video_filename):
-                                downloaded = True    
-                    if downloaded:
-                        dbmgr.set_download_flag(event['play_id'])
+                                dbmgr.set_download_flag(event['play_id'])                         
 
                     print()
             print(f"💥 There were {hbp_count} total HBP events for this day. 💥")

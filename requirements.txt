@@ -3,14 +3,18 @@
 ## Version: 1.0.0
 
 ## General operation
+atproto
 beautifulsoup4
 colorama
+ffmpeg-python
 lxml
+matplotlib
 mysql-connector-python
 numpy
 pandas
 pybaseball
 Requests
+scipy
 tqdm
 Unidecode
 

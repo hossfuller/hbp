@@ -88,6 +88,8 @@ args = parser.parse_args()
 ## Read and update configuration
 config = ConfigReader(basic.verify_file_path(basic.sanitize_path(const.DEFAULT_CONFIG_INI_FILE)))
 
+sleep_time = float(config.get("operations", "sleep_time"))
+
 start_date = datetime.strftime(datetime.now() - timedelta(days=1), '%Y-%m-%d')
 if args.start_date:
     start_date = args.start_date
@@ -183,6 +185,7 @@ def main(start_date: Optional[str] = None) -> int:
                             print()
                     except KeyboardInterrupt:
                         dbmgr.remove_row(event['play_id'])
+                time.sleep(sleep_time)
                     
             print(f"💥 There were {hbp_count} total HBP events for this day. 💥")
             print()
