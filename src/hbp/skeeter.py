@@ -58,7 +58,7 @@ parser.add_argument(
     "-t",
     "--test-mode",
     action="store_true",
-    help="Enable test mode, which doesn't assume directory and file names are in the JDOC format.",
+    help="Enable test mode, which makes this script pretend to do things.",
 )
 parser.add_argument(
     "-v",
@@ -119,7 +119,7 @@ video_dir = config.get("paths", "video_dir")
 ## MAIN ACTION
 ## -------------------------------------------------------------------------- ##
 
-def main() -> int:
+def main(num_posts: Optional[int] = 1) -> int:
     try:
         print()
 
@@ -161,12 +161,15 @@ def main() -> int:
         skeet_dir_files = sorted(os.listdir(skeet_dir))
         if verbose:
             pprint.pprint(skeet_dir_files)
-        
+        if len(skeet_dir_files) < num_posts:
+            print(f"‼️ Number of desired posts ({num_posts}) exceeds number of available skeets. Fixing.")
+            num_posts = len(skeet_dir_files)
+            print(f"‼️ Adjusted to {num_posts} posts. This may change during operation....")
+
         skeet_counter = 0
-        while (skeet_counter < num_posts):
-            current_skeet       = skeet_dir_files.pop(-1)
-            full_skeet_filename = Path(skeet_dir, current_skeet)
-            skeet_root, ext     = os.path.splitext(current_skeet)
+        for skeet_file in skeet_dir_files:
+            full_skeet_filename = Path(skeet_dir, skeet_file)
+            skeet_root, ext     = os.path.splitext(skeet_file)        
             skeet_parts         = skeet_root.split('_')
 
             ## Not a file we want to work with
@@ -215,19 +218,10 @@ def main() -> int:
                 raise Exception(f"❌ Video {video_filepath} is missing!")
             elif dbmgr.has_been_downloaded(play_id) and os.path.exists(video_filepath):
                 ## File has been marked as downloaded and does exist.
-                video_filepath = gen.find_smallest_video(video_filepath)           
+                pass        
             
             if video_filepath:
                 print(f"🎥 Video file: {video_filepath}")
-                ## Unless we see otherwise, we don't need to compress the file 
-                ## to get under some arbitrary upload limit. Delete this once we 
-                ## figure out the post error in the skeeter.py script.
-                # video_size_bytes = os.path.getsize(video_filepath)
-                # if video_size_bytes <= const.SKEETS_VIDEO_LIMIT:
-                #     print(f"🎥 Video file: {video_filepath}")
-                # else:
-                #     print(f"🎥 Video is too big! {video_size_bytes/1024} KB")
-                ##
 
             ## 3. use atproto client to construct and send skeet
             post = None
@@ -238,10 +232,9 @@ def main() -> int:
                         vid_data = f.read()
 
                     if vid_data:
-                        print(f"  Video length = {len(vid_data)}")
                         post = client.send_video(
                             text=skeet_text,
-                            video=video_filepath,
+                            video=vid_data,
                             video_alt=f"A video showing the hit-by-pitch at-bat."
                         )
                     else:
@@ -294,8 +287,10 @@ def main() -> int:
             # dbmgr.set_skeeted_flag(play_id)
             # sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
 
-            skeet_counter = skeet_counter + 1
             print()
+            skeet_counter = skeet_counter + 1
+            if skeet_counter >= num_posts:
+                break
 
         print()
         end_time = time.time()
@@ -312,4 +307,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(num_posts))

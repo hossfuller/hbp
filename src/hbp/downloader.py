@@ -224,18 +224,6 @@ def main(start_date: Optional[str] = None) -> int:
                         else:
                             video_filename = gen.download_baseball_savant_play(game['gamePk'], event['play_id'], verbose)
                             print(f"VIDEO: {video_filename}")
-                            ## Unless we see otherwise, we don't need to 
-                            ## compress the file to get under some arbitrary 
-                            ## upload limit. Delete this once we figure out the
-                            ## post error in the skeeter.py script.
-                            #
-                            # video_size_bytes = os.path.getsize(video_filename)
-                            # print(f"VIDEO: {video_filename} ({video_size_bytes} KB)")
-                            # if video_size_bytes > const.SKEETS_VIDEO_LIMIT:
-                            #     print(f" 🎥 Too big to upload! Compressing...")
-                            #     video_filename_small = gen.compress_video(video_filename, 1000)
-                            #     print(f" 🎥 Compressed file saved to {video_filename_small}.")
-                            ##
                             
                             if os.path.exists(video_filename):
                                 dbmgr.set_download_flag(event['play_id'])                         

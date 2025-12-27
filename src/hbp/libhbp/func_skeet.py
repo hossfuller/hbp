@@ -2,6 +2,7 @@
 
 import os
 import pprint
+import random
 
 from datetime import datetime
 from pathlib import Path
@@ -76,22 +77,22 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
         pprint.pprint(event)
 
     game_datetime_obj = datetime.strptime(game['date'], "%Y-%m-%d")
-    date_str          = game_datetime_obj.strftime("%d %b %Y")
+    date_str          = f"⚾💥 {game_datetime_obj.strftime("%d %B %Y")} 💥⚾"
+
+    winning_team       = game['away']['team']
+    winning_score      = game['away']['final_score']
+    losing_score       = game['home']['final_score']
+    if game['home']['final_score'] > game['away']['final_score']:
+        winning_team  = game['home']['team']
+        winning_score = game['home']['final_score']
+        losing_score  = game['away']['final_score']
 
     ## If nobody got hit, add that to the skeet_strs list.
     if len(event) == 0:
         team_str           = f"⚾🧤 {game['away']['team']} at {game['home']['team']} 🧤⚾"
         nobody_got_hit_str = f"👍 Nobody got hit!"
-        winning_team       = game['away']['team']
-        winning_score      = game['away']['final_score']
-        losing_score       = game['home']['final_score']
-        if game['home']['final_score'] > game['away']['final_score']:
-            winning_team  = game['home']['team']
-            winning_score = game['home']['final_score']
-            losing_score  = game['away']['final_score']
-        winning_line_str = f"{winning_team} won {winning_score}-{losing_score}"
-
-        skeet_strs = [team_str, date_str, nobody_got_hit_str, winning_line_str]
+        winning_line_str   = f"{winning_team} won {winning_score}-{losing_score}"
+        skeet_strs         = [team_str, date_str, nobody_got_hit_str, winning_line_str]
 
     ## Somebody got hit!
     else:
@@ -106,16 +107,17 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
         elif event['at_bat']['home_score'] == event['at_bat']['away_score']:
             game_is_tied = True
 
-        team_str = f"⚾💥 {game['away']['team']} at {game['home']['team']} 💥⚾"
-        batter_str   = f"Batter:  {bb.build_mlb_player_display_string(event['batter'])}"
-        pitcher_str  = f"Pitcher: {bb.build_mlb_player_display_string(event['pitcher'])}"
-        count_str    = f"Count:   {bb.build_hbp_event_count(event['at_bat'])}"
-        pitch_str    = f"Pitch:   {bb.build_hbp_event_pitch(event['at_bat'])}"
-        score_str    = f"Score:   {bb.get_mlb_team_attribute(leading_team, 'teamname')} lead {leading_score}-{trailing_score}"
-        if game_is_tied:
-            score_str = f"Score:   tied at {leading_score}-{trailing_score}"
+        score_str   = f"{bb.get_mlb_team_attribute(leading_team, 'teamname')} up {leading_score}-{trailing_score}"
+        if game_is_tied: 
+            score_str = f"tied at {leading_score}-{trailing_score}"
 
-        skeet_strs = [team_str, date_str, batter_str, pitcher_str, count_str, pitch_str, score_str]
+        batter_str      = f"Batter: {bb.build_mlb_player_display_string(event['batter'])}"
+        pitcher_str     = f"Pitcher: {bb.build_mlb_player_display_string(event['pitcher'])}"
+        count_str       = f"The Play: {bb.build_hbp_event_count(event['at_bat'])}, {score_str}"
+        pitch_str       = f"The Pitch: {bb.build_hbp_event_pitch(event['at_bat'])}"
+        final_score_str = f"Final: {winning_team} won {winning_score}-{losing_score}"
+
+        skeet_strs = [date_str, pitcher_str, batter_str, count_str, pitch_str, final_score_str]
 
     total_skeet_str = "\n".join(skeet_strs)
     total_skeet_length = len(total_skeet_str)
