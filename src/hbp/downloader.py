@@ -24,7 +24,6 @@ from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import Optional
 
 
@@ -196,7 +195,7 @@ def main(start_date: Optional[str] = None) -> int:
                     hbp_count = hbp_count + 1
                     
                     ## Check if event is already in database. If not, add it.
-                    dbdata = dbmgr.get_hbp_data(event['play_id'])
+                    dbdata = dbmgr.get_hbp_play_data(event['play_id'])
                     if len(dbdata) == 0:
                         dbinsert_result = dbmgr.insert_row(game_deets, event)
                         if dbinsert_result:

@@ -20,6 +20,7 @@ MLB_STATS_BASE_URL             = 'https://statsapi.mlb.com'
 MLB_STATS_SCHEDULE_STUB        = '/api/v1/schedule'
 MLB_STATS_GAME_STUB            = '/api/v1/game/<<GAME_PK>>/content'
 MLB_STATS_LIVE_FEED_STUB       = '/api/v1.1/game/<<GAME_PK>>/feed/live'
+MLB_STATS_PLAYER_STUB          = '/api/v1/people/<<PLAYER_ID>>'
 
 
 ## ---------------------------------------------------------------------------->

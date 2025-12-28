@@ -164,7 +164,6 @@ def main(start_date: Optional[str] = None) -> int:
                     pprint.pprint(hbp_events)
                     print("@ ------------ END ------------- ")
                     print()
-        
                 ## "HBP EVENT" FOR LOOP
                 ## Loops through all the HBP events.
                 for j, event in enumerate(hbp_events):        
@@ -182,11 +181,10 @@ def main(start_date: Optional[str] = None) -> int:
                                 print(f" (nz)", end='')
                             if dbmgr.has_been_skeeted(event['play_id']):
                                 print(f" (sk)", end='')
-                            print()
+                            print()                            
                     except KeyboardInterrupt:
                         dbmgr.remove_row(event['play_id'])
                 time.sleep(sleep_time)
-                    
             print(f"💥 There were {hbp_count} total HBP events for this day. 💥")
             print()
             total_hbp_events = total_hbp_events + hbp_count

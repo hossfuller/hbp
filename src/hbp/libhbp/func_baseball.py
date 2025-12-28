@@ -46,19 +46,16 @@ def build_mlb_player_display_string(player: list, verbose_bool: Optional[bool] =
 
 
 def get_mlb_game_deets(game: list, verbose_bool: Optional[bool] = False) -> list:
-    '''
-    Stub function for gathering basic details about the game in particular.
-    '''
     game_deets = {
         'home': {
-            'team'       : game['teams']['home']['team']['name'],
+            'team'       : game['teams']['home']['team']['name'] if 'name' in game['teams']['home']['team'] else 'N/A',
             'final_score': game['teams']['home']['score'] if 'score' in game['teams']['home'] else None,
             'wins'       : game['teams']['home']['leagueRecord']['wins'],
             'losses'     : game['teams']['home']['leagueRecord']['losses'],
             'pct'        : game['teams']['home']['leagueRecord']['pct'],
         },
         'away': {
-            'team'       : game['teams']['away']['team']['name'],
+            'team'       : game['teams']['away']['team']['name'] if 'name' in game['teams']['away']['team'] else 'N/A',
             'final_score': game['teams']['away']['score'] if 'score' in game['teams']['away'] else None,
             'wins'       : game['teams']['away']['leagueRecord']['wins'],
             'losses'     : game['teams']['away']['leagueRecord']['losses'],
@@ -94,12 +91,15 @@ def get_mlb_games_for_date(date_str: str, verbose_bool: Optional[bool] = False) 
 def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optional[bool] = False) -> list:
     hit_by_pitch_events = []
 
-    live_feed_url = const.MLB_STATS_BASE_URL + game['link']
-    response = requests.get(live_feed_url, timeout=10)
-    response.raise_for_status()
-    data = response.json()
-
-    all_plays = data.get("liveData", {}).get("plays", {}).get("allPlays", [])
+    try:
+        live_feed_url = const.MLB_STATS_BASE_URL + game['link']
+        response      = requests.get(live_feed_url, timeout=10)
+        response.raise_for_status()
+        data      = response.json()
+        all_plays = data.get("liveData", {}).get("plays", {}).get("allPlays", [])
+    except: 
+        print(f"[ERROR] Something went wrong querying {const.MLB_STATS_BASE_URL + game['link']}!")
+        all_plays = []
 
     for play in all_plays:
         # Identify HBP at the play-result level (most reliable)
@@ -154,6 +154,32 @@ def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optio
         })
 
     return hit_by_pitch_events
+
+
+def get_mlb_player_details(player_id: int, verbose_bool: Optional[bool] = False) -> list:
+    player_details_url = const.MLB_STATS_BASE_URL + const.MLB_STATS_PLAYER_STUB.replace('<<PLAYER_ID>>', str(player_id))
+    response = requests.get(player_details_url, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+    
+    if verbose_bool:
+        pprint.pprint(data)
+    
+    player_details = {
+        'id'              : data['people'][0]['id'],
+        'link'            : data['people'][0]['link'],
+        'name'            : data['people'][0]['fullName'],
+        'birthdate'       : data['people'][0]['birthDate'],
+        'height'          : data['people'][0]['height'],
+        'jersey_number'   : data['people'][0]['primaryNumber'] if 'primaryNumber' in data['people'][0] else None,
+        'primary_position': data['people'][0]['primaryPosition']['abbreviation'],
+        'pitches'         : data['people'][0]['pitchHand']['code'],
+        'hits'            : data['people'][0]['batSide']['code'],
+        'strike_zone_top' : data['people'][0]['strikeZoneTop'],
+        'strike_zone_bot' : data['people'][0]['strikeZoneBottom']
+    } 
+    
+    return player_details
 
 
 def get_mlb_team_attribute(full_team_str: str, sought_after_attr: str, verbose_bool: Optional[bool] = False) -> str:

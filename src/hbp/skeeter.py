@@ -11,7 +11,6 @@ import argparse
 import json
 import os
 import pprint
-# import requests
 import sys
 import time
 

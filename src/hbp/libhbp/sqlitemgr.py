@@ -42,7 +42,7 @@ class SQLiteManager:
             print(f"An error occurred: {e}")
         return insert_result
     
-    def get_hbpdata_data(self, query: str, args: list) -> list:
+    def query_hbpdata(self, query: str, args: list) -> list:
         self.cursor.execute(query, args)
         records = self.cursor.fetchall()
         return records
