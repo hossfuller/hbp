@@ -55,7 +55,7 @@ def get_all_player_data(
     return player_data
 
 
-def get_hbp_play_data(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def get_hbp_play_data(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> list:
     select_data = []
     with SQLiteManager(dbfile) as db: 
         select_data = db.query_hbpdata(
@@ -65,7 +65,7 @@ def get_hbp_play_data(play_id: str, dbfile: str = db_file_path, dbtable: str = d
     return select_data    
     
     
-def get_season_data(season: int, dbfile: str = db_file_path, dbtable: str = db_table):
+def get_season_data(season: int, dbfile: str = db_file_path, dbtable: str = db_table) -> list:
     season_data = []
     season_start = f"{season}-01-01"
     season_end = f"{season}-12-31"
@@ -77,19 +77,19 @@ def get_season_data(season: int, dbfile: str = db_file_path, dbtable: str = db_t
     return season_data    
 
     
-def has_been_downloaded(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def has_been_downloaded(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return has_been_done(play_id, "downloaded", dbfile, dbtable)
 
 
-def has_been_analyzed(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def has_been_analyzed(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return has_been_done(play_id, "analyzed", dbfile, dbtable)
 
 
-def has_been_skeeted(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def has_been_skeeted(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return has_been_done(play_id, "skeeted", dbfile, dbtable)
 
 
-def has_been_done(play_id: str, flag: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def has_been_done(play_id: str, flag: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     flags       = {'downloaded': 8, 'analyzed': 9, 'skeeted': 10}
     flag_index  = flags.get(flag)
     flag_status = False
@@ -105,19 +105,19 @@ def has_been_done(play_id: str, flag: str, dbfile: str = db_file_path, dbtable: 
     return flag_status
 
 
-def set_download_flag(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def set_download_flag(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return set_hbp_flag(play_id, 'downloaded', dbfile, dbtable)
 
 
-def set_analyzed_flag(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def set_analyzed_flag(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return set_hbp_flag(play_id, 'analyzed', dbfile, dbtable)
 
 
-def set_skeeted_flag(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def set_skeeted_flag(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return set_hbp_flag(play_id, 'skeeted', dbfile, dbtable)
 
 
-def set_hbp_flag(play_id: str, flag: str, dbfile: str = db_file_path, dbtable: str = db_table):
+def set_hbp_flag(play_id: str, flag: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     flags       = ['downloaded', 'analyzed', 'skeeted']
     flag_status = False
 

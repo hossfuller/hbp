@@ -17,6 +17,7 @@ from .libhbp import constants as const
 from .libhbp import func_baseball as bb
 from .libhbp import func_database as dbmgr
 from .libhbp import func_general as gen
+from .libhbp import func_plot as hbpplot
 from .libhbp import func_skeet as sk
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
@@ -185,24 +186,27 @@ def main() -> int:
             print(f"   {pitcher_info['name']} ({pitcher_info['primary_position']}) has hit {len(pitcher_career_data)} batters in his career.")
             print(f"   {batter_info['name']} ({batter_info['primary_position']}) has been hit {len(batter_career_data)} times in his career.")
 
-
-
-##  7a. Plot all_season_data as gray, current_play color coded to end_speed.
+            if all_season_data and len(all_season_data) > 0:
+                ##  7a. Plot all_season_data as gray, current_play color coded to end_speed.
+                print(f"   📊 Creating scatter plot for this HBP against all HBPs for {season}...")
+                plot_result = hbpplot.plot_current_play_against_season(
+                    current_play, 
+                    all_season_data,
+                    pitcher_info,
+                    batter_info
+                )
+                
+                if not plot_result:
+                    continue
+                
+                ## Do other plots.
 ##  7b. Plot batter_career_data as gray, current_play color coded to end_speed.
 ##  7c. Plot pitcher_career_data as gray, current_play color coded to end_speed.
 
-
-
-
-
-
-
-
-
+            else:
+                print(f"   ⚠️  No season data available for plotting.")
 
             print()
-
-        print()
         end_time = time.time()
         elapsed = end_time - start_time
         print("="*80)
