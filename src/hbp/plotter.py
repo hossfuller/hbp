@@ -3,6 +3,8 @@
 ## -------------------------------------------------------------------------- ##
 ## @TODO Section!
 ## -------------------------------------------------------------------------- ##
+## - Add a batter's silhouette to the plots.
+## -------------------------------------------------------------------------- ##
 
 
 import argparse
@@ -195,14 +197,32 @@ def main() -> int:
                     pitcher_info,
                     batter_info
                 )
-                
                 if not plot_result:
                     continue
                 
-                ## Do other plots.
-##  7b. Plot batter_career_data as gray, current_play color coded to end_speed.
-##  7c. Plot pitcher_career_data as gray, current_play color coded to end_speed.
-
+                ##  7b. Plot batter_career_data as gray, current_play color coded to end_speed.
+                print(f"   📊 Creating scatter plot for this batter's career HBPs...")
+                plot_result = hbpplot.plot_batter_play_against_career(
+                    current_play, 
+                    batter_career_data,
+                    batter_info
+                )
+                if not plot_result:
+                    continue
+                
+                ##  7c. Plot pitcher_career_data as gray, current_play color coded to end_speed.
+                print(f"   📊 Creating scatter plot for this pitcher's career HBPs...")
+                plot_result = hbpplot.plot_pitcher_play_against_career(
+                    current_play, 
+                    pitcher_career_data,
+                    pitcher_info
+                )
+                if not plot_result:
+                    continue
+                
+                ## If we get to this point, all three plots have been created.
+                dbmgr.set_analyzed_flag(play_id)                         
+                
             else:
                 print(f"   ⚠️  No season data available for plotting.")
 

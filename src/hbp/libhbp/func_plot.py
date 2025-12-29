@@ -24,14 +24,87 @@ plot_dir  = config.get("paths", "plot_dir")
 skeet_dir = config.get("paths", "skeet_dir")
 video_dir = config.get("paths", "video_dir")
 
+plot_dimensions = {
+    'x_min': float(config.get("bluesky", "plot_min_x")),
+    'x_max': float(config.get("bluesky", "plot_max_x")),
+    'y_min': float(config.get("bluesky", "plot_min_y")),
+    'y_max': float(config.get("bluesky", "plot_max_y")),
+}
+
 
 ## -------------------------------------------------------------------------- ##
 ## PLOTTING FUNCTIONS
 ## -------------------------------------------------------------------------- ##
 
+def plot_batter_play_against_career(
+    current_play: list, 
+    cumulative_data: list, 
+    player_info: list,
+    verbose_bool: Optional[bool] = False, 
+    plot_dir: Optional[str] = plot_dir
+) -> bool:
+    # Plot strike zone box (if batter info contains strike zone data)
+    strikezone = [
+        (-0.708, player_info.get('strike_zone_bot', 1.5)),
+        (-0.708, player_info.get('strike_zone_top', 3.5)),
+        (0.708, player_info.get('strike_zone_top', 3.5)),
+        (0.708, player_info.get('strike_zone_bot', 1.5))
+    ]
+
+    handedness = 'righty'
+    if player_info['hits'] == 'L':
+        handedness = 'lefty'
+    title = f"All the times {player_info['name']} (bats {player_info['hits']}) has been hit by pitches"
+
+    plot_filename = f"{current_play[0][1]}_{current_play[0][0]}_batter.png"
+    plot_fullpath = os.path.join(plot_dir, plot_filename)
+
+    return plot_single_play_against_cumulative_data(
+        current_play, 
+        cumulative_data, 
+        strikezone, 
+        title, 
+        '', 
+        plot_fullpath, 
+        plot_dimensions,
+        verbose_bool
+    )
+
+
+def plot_pitcher_play_against_career(
+    current_play: list, 
+    cumulative_data: list, 
+    player_info: list,
+    verbose_bool: Optional[bool] = False, 
+    plot_dir: Optional[str] = plot_dir
+) -> bool:
+    # Plot strike zone box (if batter info contains strike zone data)
+    strikezone = [
+        (-0.708, player_info.get('strike_zone_bot', 1.5)),
+        (-0.708, player_info.get('strike_zone_top', 3.5)),
+        (0.708, player_info.get('strike_zone_top', 3.5)),
+        (0.708, player_info.get('strike_zone_bot', 1.5))
+    ]
+
+    title = f"All the times {player_info['name']} (throws {player_info['pitches']}) has hit batters"
+
+    plot_filename = f"{current_play[0][1]}_{current_play[0][0]}_pitcher.png"
+    plot_fullpath = os.path.join(plot_dir, plot_filename)
+
+    return plot_single_play_against_cumulative_data(
+        current_play, 
+        cumulative_data, 
+        strikezone, 
+        title, 
+        '', 
+        plot_fullpath, 
+        plot_dimensions,
+        verbose_bool
+    )
+
 def plot_current_play_against_season(
     current_play: list, 
-    all_season_data: list, 
+    cumulative_data: list, 
     pitcher_info: list,
     batter_info: list,
     verbose_bool: Optional[bool] = False, 
@@ -40,13 +113,47 @@ def plot_current_play_against_season(
     game_date        = current_play[0][2]
     season,month,day = game_date.split('-')
 
+    # Plot strike zone box (if batter info contains strike zone data)
+    strikezone = [
+        (-0.708, batter_info.get('strike_zone_bot', 1.5)),
+        (-0.708, batter_info.get('strike_zone_top', 3.5)),
+        (0.708, batter_info.get('strike_zone_top', 3.5)),
+        (0.708, batter_info.get('strike_zone_bot', 1.5))
+    ]
+
+    title = f"{pitcher_info['name']} (throws {pitcher_info['pitches']}) vs {batter_info['name']} (bats {batter_info['hits']}), {game_date}"
+
+    plot_filename = f"{current_play[0][1]}_{current_play[0][0]}_{season}.png"
+    plot_fullpath = os.path.join(plot_dir, plot_filename)
+
+    return plot_single_play_against_cumulative_data(
+        current_play, 
+        cumulative_data, 
+        strikezone, 
+        title, 
+        season, 
+        plot_fullpath, 
+        plot_dimensions,
+        verbose_bool
+    )
+
+def plot_single_play_against_cumulative_data(
+    current_play: list, 
+    cumulative_data: list, 
+    strike_zone_corners: list,
+    title: str,
+    season: str,
+    plot_fullpath: str,
+    plot_dimensions: list = plot_dimensions,
+    verbose_bool: Optional[bool] = False, 
+) -> bool:
     # Extract data for plotting with validation
     x_positions = []
     z_positions = []
     end_speeds  = []
     
     null_warnings = []
-    for i, item in enumerate(all_season_data):
+    for i, item in enumerate(cumulative_data):
         # Check for None or empty values
         if item[6] is None or item[6] == '':
             null_warnings.append(f"Row {i+1}: x_pos is null/empty")
@@ -61,12 +168,7 @@ def plot_current_play_against_season(
         x_positions.append(float(item[6]))  # x_pos (column 6)
         z_positions.append(float(item[7]))  # z_pos (column 7)
         end_speeds.append(float(item[5]))  # end_speed (column 5)
-            
-    
-    # # Display warnings if any null/empty fields were found
-    # if null_warnings:
-    #     print(f"   ⚠️  Found {len(null_warnings)} rows with null/empty fields. Skipping that data.")
-    
+                
     # Check if we have any valid data to plot
     if not x_positions or not z_positions or not end_speeds:
         print(f"   ❌ No valid data available for plotting after filtering null/empty fields.")
@@ -95,13 +197,15 @@ def plot_current_play_against_season(
     home_plate_corners = [top_left, top_right, bottom_right_rect, point, bottom_left_rect]
     
     # Create home plate polygon (white, no label as requested)
-    home_plate = plt.Polygon(home_plate_corners, 
-                             closed=True, 
-                             fill=True, 
-                             facecolor='white',
-                             edgecolor='black',
-                             linewidth=2.0,
-                             zorder=2)  # Draw above dirt but below data points
+    home_plate = plt.Polygon(
+        home_plate_corners, 
+        closed=True, 
+        fill=True, 
+        facecolor='white',
+        edgecolor='black',
+        linewidth=2.0,
+        zorder=2
+    )  # Draw above dirt but below data points
     ax.add_patch(home_plate)
     
     # Add horizontal line at z=0 (ground level)
@@ -109,36 +213,26 @@ def plot_current_play_against_season(
     
     # Add explanatory label for area below z=0
     ax.text(0, -2, 
-            "Anything in this area bounced in\nthe dirt before reaching home plate.",
-            ha='center', va='center',
-            fontsize=10, fontweight='normal',
-            bbox=dict(facecolor='white', alpha=0.8, edgecolor='black', boxstyle='round,pad=0.5'))
-    
-    # Home plate label removed as requested
-    
-    # Plot strike zone box (if batter info contains strike zone data)
-    strike_zone_corners = [
-        (-0.708, batter_info.get('strike_zone_bot', 1.5)),
-        (-0.708, batter_info.get('strike_zone_top', 3.5)),
-        (0.708, batter_info.get('strike_zone_top', 3.5)),
-        (0.708, batter_info.get('strike_zone_bot', 1.5))
-    ]
+        "Anything in this area bounced in\nthe dirt before reaching home plate.",
+        ha='center', va='center',
+        fontsize=10, fontweight='normal',
+        bbox=dict(facecolor='white', alpha=0.8, edgecolor='black', boxstyle='round,pad=0.5')
+    )
     
     # Create strike zone box with no fill (outline only)
-    strike_zone_box = plt.Polygon(strike_zone_corners, 
-                                  closed=True, 
-                                  fill=False,  # No fill as requested
-                                  edgecolor='black',
-                                  linewidth=1.0,
-                                  zorder=1)  # Draw underneath scatter points
+    strike_zone_box = plt.Polygon(
+        strike_zone_corners, 
+        closed=True, 
+        fill=False,  # No fill as requested
+        edgecolor='black',
+        linewidth=1.0,
+        zorder=1
+    )  # Draw underneath scatter points
     ax.add_patch(strike_zone_box)
-    
-    # Strike zone label removed as requested
-    
+        
     # Define color gradient: blue at min speed, green at average speed, red at max speed
     min_speed = min(end_speeds)
     max_speed = max(end_speeds)
-    avg_speed = (min_speed + max_speed) / 2
     speed_range = max_speed - min_speed
     
     # Create color array based on speed gradient (blue -> green -> red)
@@ -175,7 +269,10 @@ def plot_current_play_against_season(
     )
     
     # Add colorbar
-    sm = plt.cm.ScalarMappable(cmap=plt.cm.jet, norm=plt.Normalize(vmin=min(end_speeds), vmax=max(end_speeds)))
+    sm = plt.cm.ScalarMappable(
+        cmap=plt.cm.jet, 
+        norm=plt.Normalize(vmin=min(end_speeds), vmax=max(end_speeds))
+    )
     sm.set_array([])
     cbar = plt.colorbar(sm, ax=ax)
     cbar.set_label('Pitch Speed (mph)', rotation=270, labelpad=15)
@@ -209,7 +306,7 @@ def plot_current_play_against_season(
         except (ValueError, TypeError):
             return False
     
-    current_in_season = any(is_current_play_match(item) for item in all_season_data)
+    current_in_season = any(is_current_play_match(item) for item in cumulative_data)
     
     if current_in_season:
         # Determine color based on current play speed
@@ -246,8 +343,7 @@ def plot_current_play_against_season(
         return False
     
     # Add title and labels
-    # ax.set_title(f'Hit-by-Pitch Events - {season} Season\\nColored by Pitch Speed', fontsize=14, pad=20)
-    ax.set_title(f"{pitcher_info['name']} ({pitcher_info['primary_position']}) vs {batter_info['name']} ({batter_info['primary_position']}), {game_date}", fontsize=14, pad=20)
+    ax.set_title(title, fontsize=14, pad=20)
     ax.set_xlabel('X Position (feet from home plate)', fontsize=12)
     ax.set_ylabel('Z Position (feet from ground)', fontsize=12)
     
@@ -257,13 +353,34 @@ def plot_current_play_against_season(
     # Create legend with data point count
     legend_elements = []
     if current_in_season:
-        legend_elements.append(plt.Line2D([0], [0], marker='s', color='w', label=f"Current Play, {current_play[0][5]} mph",
-                                         markerfacecolor=current_color, markersize=10, markeredgecolor='yellow', markeredgewidth=3.0))
+        legend_elements.append(
+            plt.Line2D([0], [0], 
+                marker='s', 
+                color='w', 
+                label=f"Current Play, {current_play[0][5]} mph",
+                markerfacecolor=current_color, 
+                markersize=10, 
+                markeredgecolor='yellow', 
+                markeredgewidth=3.0
+            )
+        )
     
     # Add data point count to legend
     data_point_count = len(x_positions)
-    legend_elements.append(plt.Line2D([0], [0], marker='o', color='w', label=f"{data_point_count} HBP in {season}",
-                                     markerfacecolor='gray', markersize=8, markeredgecolor='black', markeredgewidth=0.5))
+    legend_label = f"{data_point_count} HBP for career"
+    if season:
+        legend_label = f"{data_point_count} HBP in {season}"
+    legend_elements.append(
+        plt.Line2D([0], [0], 
+            marker='o', 
+            color='w', 
+            label=legend_label, 
+            markerfacecolor='gray', 
+            markersize=8, 
+            markeredgecolor='black', 
+            markeredgewidth=0.5
+        )
+    )
     
     # Add legend to plot
     ax.legend(handles=legend_elements, fontsize=10, loc='upper right')
@@ -271,11 +388,13 @@ def plot_current_play_against_season(
     # Adjust layout
     plt.tight_layout()
     
+    # Set fixed axis limits.
+    ax.set_xlim(plot_dimensions['x_min'], plot_dimensions['x_max']) 
+    ax.set_ylim(plot_dimensions['y_min'], plot_dimensions['y_max'])
+    
     # Save the plot
-    plot_filename = f"{current_play[0][1]}_{current_play[0][0]}_{season}.png"
-    plot_path = os.path.join(plot_dir, plot_filename)
-    plt.savefig(plot_path, bbox_inches='tight')
-    print(f"   🖼️  Saved season plot to: {plot_path}")
+    plt.savefig(plot_fullpath, bbox_inches='tight')
+    print(f"   🖼️  {plot_fullpath}")
     
     plt.close(fig)
     
