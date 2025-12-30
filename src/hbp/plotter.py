@@ -177,6 +177,8 @@ def main() -> int:
             if verbose:                        
                 pprint.pprint(pitcher_info)
                 pprint.pprint(batter_info)
+            pprint.pprint(pitcher_info)
+            pprint.pprint(batter_info)
 
             ##  6. Query the season, pitcher_id, batter_id.
             all_season_data     = dbmgr.get_season_data(int(season))

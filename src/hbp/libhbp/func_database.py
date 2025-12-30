@@ -55,6 +55,16 @@ def get_all_player_data(
     return player_data
 
 
+def get_earliest_date(dbfile: str = db_file_path, dbtable: str = db_table) -> str:
+    select_data = None
+    with SQLiteManager(dbfile) as db: 
+        select_data = db.query_hbpdata(
+            f"SELECT MIN(game_date) FROM {dbtable}",
+            []
+        )
+    return select_data[0][0]    
+
+
 def get_hbp_play_data(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> list:
     select_data = []
     with SQLiteManager(dbfile) as db: 

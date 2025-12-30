@@ -271,9 +271,11 @@ def main(num_posts: Optional[int] = 1) -> int:
                     for plot_path in plots:
                         with open(plot_path, 'rb') as f:
                             images.append(f.read())
+                    
+                    first_datetime_obj = datetime.strptime(dbmgr.get_earliest_date(), "%Y-%m-%d")
                     reply_to_root = models.create_strong_ref(
                         client.send_images(
-                            text='', 
+                            text=f"Based on data collected through {first_datetime_obj.strftime("%d %B %Y")}.", 
                             images=images, 
                             image_alts=plot_alts,
                             reply_to=models.AppBskyFeedPost.ReplyRef(parent=root_post_ref, root=root_post_ref),
@@ -283,8 +285,9 @@ def main(num_posts: Optional[int] = 1) -> int:
                 raise Exception(f"❌ Post of {play_id} failed!")
                             
             # 4. Clean up!
-            dbmgr.set_skeeted_flag(play_id)
-            sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
+            if not test_mode:
+                dbmgr.set_skeeted_flag(play_id)
+                sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
             
             print()
             skeet_counter = skeet_counter + 1

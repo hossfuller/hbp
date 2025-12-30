@@ -6,6 +6,7 @@ import pprint
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
+import matplotlib.image as mpimg
 import numpy as np
 
 from typing import Optional
@@ -64,7 +65,8 @@ def plot_batter_play_against_career(
         cumulative_data, 
         strikezone, 
         title, 
-        '', 
+        player_info['height'],
+        player_info['hits'],
         plot_fullpath, 
         plot_dimensions,
         verbose_bool
@@ -96,7 +98,8 @@ def plot_pitcher_play_against_career(
         cumulative_data, 
         strikezone, 
         title, 
-        '', 
+        '',
+        '',
         plot_fullpath, 
         plot_dimensions,
         verbose_bool
@@ -130,6 +133,8 @@ def plot_current_play_against_season(
         current_play, 
         cumulative_data, 
         strikezone, 
+        batter_info['height'],
+        batter_info['hits'],
         title, 
         season, 
         plot_fullpath, 
@@ -141,6 +146,8 @@ def plot_single_play_against_cumulative_data(
     current_play: list, 
     cumulative_data: list, 
     strike_zone_corners: list,
+    player_height: str,
+    player_handedness: str,
     title: str,
     season: str,
     plot_fullpath: str,
@@ -342,15 +349,15 @@ def plot_single_play_against_cumulative_data(
     else:
         return False
     
-    # Add title and labels
+    # Add title and labels.
     ax.set_title(title, fontsize=14, pad=20)
     ax.set_xlabel('Feet from center of home plate', fontsize=12)
     ax.set_ylabel('Feet from ground', fontsize=12)
     
-    # Add grid and legend
+    # Add grid and legend.
     ax.grid(True, alpha=0.3)
     
-    # Create legend with data point count
+    # Create legend with data point count.
     legend_elements = []
     if current_in_season:
         legend_elements.append(
@@ -365,7 +372,7 @@ def plot_single_play_against_cumulative_data(
             )
         )
     
-    # Add data point count to legend
+    # Add data point count to legend.
     data_point_count = len(x_positions)
     legend_label = f"{data_point_count} HBP for career"
     if season:
@@ -382,8 +389,54 @@ def plot_single_play_against_cumulative_data(
         )
     )
     
-    # Add legend to plot with bbox_to_anchor to ensure it fits within layout
+    # Add legend to plot with bbox_to_anchor to ensure it fits within layout.
     ax.legend(handles=legend_elements, fontsize=10, loc='upper right', bbox_to_anchor=(1.0, 1.0))
+    
+    # # Add batter silhouette image
+    # try:
+    #     # Load the batter silhouette image
+    #     batter_img = mpimg.imread(basic.verify_file_path('batter_silhouette.png'))
+        
+    #     # Create an overlay axis that matches the main plot's data coordinates
+    #     # This prevents distortion of the main plot while allowing precise positioning
+    #     overlay_ax = ax.twinx()
+    #     overlay_ax.set_ylim(ax.get_ylim())
+    #     overlay_ax.set_xlim(ax.get_xlim())
+        
+    #     # player_height: str,
+    #     # player_handedness: str,
+    #     # if player_handedness == 'L':
+    #     #     pass
+
+    #     ## 3 situations:
+    #     ##  A. If a player height/handedness is passed in:
+    #     ##      1. Flip the image so that it's left-handed.
+    #     ##      2. Move the image so that it's on the proper side of the plate.
+    #     ##      3. Scale the image so that it's height is scaled properly.
+    #     ##  B. If no player height/handeness is given, then this is a pitcher:
+    #     ##      1. Duplicate image and flip it so it's left-handed.
+    #     ##      2. Move the left-handed image to the proper side of the plate.
+    #     ##      3. Scale the image so that it's height is equivalent to 5'10".
+
+
+    #     # Position the image so its bottom-left corner is at data coordinates (-4, 0)
+    #     # Size the image to be 2 feet wide and 4 feet tall in data units
+    #     img_width = 2.0   # Width in data units (feet)
+    #     img_height = 4.0  # Height in data units (feet)
+        
+    #     # Position: left edge at x=-4, bottom edge at y=0
+    #     img_extent = [-4.0, -4.0 + img_width, 0.0, 0.0 + img_height]
+        
+    #     # Add the image to the overlay axis
+    #     # Use zorder=10 to ensure it's drawn above other elements
+    #     # Use alpha=0.7 for slight transparency
+    #     overlay_ax.imshow(batter_img, extent=img_extent, aspect='auto', zorder=10, alpha=0.7)
+        
+    #     # Hide the overlay axis to make it invisible
+    #     overlay_ax.set_axis_off()
+        
+    # except Exception as e:
+    #     print(f"   ⚠️  Could not load batter silhouette: {e}")
     
     # Adjust layout with padding to accommodate batter silhouette and other decorations
     # Use tight_layout with adjusted parameters to ensure proper spacing for colorbar and legend
