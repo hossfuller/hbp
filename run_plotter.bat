@@ -4,9 +4,6 @@
 :: Author: Hossein Fuller <hossfuller@protonmail.com>
 :: Version: 1.0.0
 
-:: Steps through the entire workflow from download to skeet.
-:: @todo: Remember to keep command line arguments consistent!!
-
 :: Change to the project directory.
 cd /d "%~dp0"
 
