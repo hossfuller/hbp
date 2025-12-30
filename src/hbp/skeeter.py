@@ -275,7 +275,7 @@ def main(num_posts: Optional[int] = 1) -> int:
                     first_datetime_obj = datetime.strptime(dbmgr.get_earliest_date(), "%Y-%m-%d")
                     reply_to_root = models.create_strong_ref(
                         client.send_images(
-                            text=f"Based on data collected through {first_datetime_obj.strftime("%d %B %Y")}.", 
+                            text=f"Based on data collected through {first_datetime_obj.strftime("%d %b %Y")}.", 
                             images=images, 
                             image_alts=plot_alts,
                             reply_to=models.AppBskyFeedPost.ReplyRef(parent=root_post_ref, root=root_post_ref),

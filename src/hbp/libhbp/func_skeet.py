@@ -82,20 +82,26 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
     game_datetime_obj = datetime.strptime(game['date'], "%Y-%m-%d")
     date_str          = f"⚾💥 {game_datetime_obj.strftime("%d %B %Y")} 💥⚾"
 
-    winning_team       = game['away']['team']
-    winning_score      = game['away']['final_score']
-    losing_score       = game['home']['final_score']
-    if game['home']['final_score'] > game['away']['final_score']:
-        winning_team  = game['home']['team']
-        winning_score = game['home']['final_score']
-        losing_score  = game['away']['final_score']
+    ## If the game is finished, there'll be a final score.
+    if 'final_score' in game['home']:
+        winning_team       = game['away']['team']
+        winning_score      = game['away']['final_score']
+        losing_score       = game['home']['final_score']
+        if game['home']['final_score'] > game['away']['final_score']:
+            winning_team  = game['home']['team']
+            winning_score = game['home']['final_score']
+            losing_score  = game['away']['final_score']
 
     ## If nobody got hit, add that to the skeet_strs list.
     if len(event) == 0:
         team_str           = f"⚾🧤 {game['away']['team']} at {game['home']['team']} 🧤⚾"
         nobody_got_hit_str = f"👍 Nobody got hit!"
-        winning_line_str   = f"{winning_team} won {winning_score}-{losing_score}"
-        skeet_strs         = [team_str, date_str, nobody_got_hit_str, winning_line_str]
+        
+        winning_line_str = ''
+        if 'final_score' in game['home']: 
+            winning_line_str = f"{winning_team} won {winning_score}-{losing_score}"  
+            
+        skeet_strs = [team_str, date_str, nobody_got_hit_str, winning_line_str]
 
     ## Somebody got hit!
     else:
@@ -118,7 +124,10 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
         pitcher_str     = f"Pitcher: {bb.build_mlb_player_display_string(event['pitcher'])}"
         count_str       = f"The Play: {bb.build_hbp_event_count(event['at_bat'])}, {score_str}"
         pitch_str       = f"The Pitch: {bb.build_hbp_event_pitch(event['at_bat'])}"
-        final_score_str = f"Final: {winning_team} won {winning_score}-{losing_score}"
+
+        final_score_str = ''
+        if 'final_score' in game['home']: 
+            final_score_str = f"Final: {winning_team} won {winning_score}-{losing_score}"
 
         skeet_strs = [date_str, pitcher_str, batter_str, count_str, pitch_str, final_score_str]
 

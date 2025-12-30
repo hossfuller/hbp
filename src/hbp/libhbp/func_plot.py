@@ -42,6 +42,7 @@ def plot_batter_play_against_career(
     cumulative_data: list, 
     player_info: list,
     verbose_bool: Optional[bool] = False, 
+    plot_dimensions: Optional[list] = plot_dimensions,
     plot_dir: Optional[str] = plot_dir
 ) -> bool:
     # Plot strike zone box (if batter info contains strike zone data)
@@ -52,9 +53,9 @@ def plot_batter_play_against_career(
         (0.708, player_info.get('strike_zone_bot', 1.5))
     ]
 
-    handedness = 'righty'
-    if player_info['hits'] == 'L':
-        handedness = 'lefty'
+    # handedness = 'righty'
+    # if player_info['hits'] == 'L':
+    #     handedness = 'lefty'
     title = f"All the times {player_info['name']} (bats {player_info['hits']}) has been hit by pitches"
 
     plot_filename = f"{current_play[0][1]}_{current_play[0][0]}_batter.png"
@@ -64,9 +65,10 @@ def plot_batter_play_against_career(
         current_play, 
         cumulative_data, 
         strikezone, 
-        title, 
         player_info['height'],
         player_info['hits'],
+        title, 
+        None,
         plot_fullpath, 
         plot_dimensions,
         verbose_bool
@@ -78,6 +80,7 @@ def plot_pitcher_play_against_career(
     cumulative_data: list, 
     player_info: list,
     verbose_bool: Optional[bool] = False, 
+    plot_dimensions: Optional[list] = plot_dimensions,
     plot_dir: Optional[str] = plot_dir
 ) -> bool:
     # Plot strike zone box (if batter info contains strike zone data)
@@ -97,13 +100,15 @@ def plot_pitcher_play_against_career(
         current_play, 
         cumulative_data, 
         strikezone, 
+        None,
+        None,
         title, 
-        '',
-        '',
+        None,
         plot_fullpath, 
         plot_dimensions,
         verbose_bool
     )
+
 
 def plot_current_play_against_season(
     current_play: list, 
@@ -111,6 +116,7 @@ def plot_current_play_against_season(
     pitcher_info: list,
     batter_info: list,
     verbose_bool: Optional[bool] = False, 
+    plot_dimensions: Optional[list] = plot_dimensions,
     plot_dir: Optional[str] = plot_dir
 ) -> bool:
     game_date        = current_play[0][2]
@@ -151,7 +157,7 @@ def plot_single_play_against_cumulative_data(
     title: str,
     season: str,
     plot_fullpath: str,
-    plot_dimensions: list = plot_dimensions,
+    plot_dimensions: Optional[list] = plot_dimensions,
     verbose_bool: Optional[bool] = False, 
 ) -> bool:
     # Extract data for plotting with validation
