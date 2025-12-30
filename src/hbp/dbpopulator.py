@@ -146,7 +146,7 @@ def main(start_date: Optional[str] = None) -> int:
 
         total_hbp_events = 0
         for xday in range(num_days):
-            print(f'⚾ Checking {start_date} for games...', end='')
+            print(f'⚾ [{xday+1}/{num_days}] Checking {start_date} for games...', end='')
             mlb_games = bb.get_mlb_games_for_date(start_date)
             print(f'found {len(mlb_games)} games that day. ⚾')
         

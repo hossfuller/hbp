@@ -3,8 +3,6 @@
 ## -------------------------------------------------------------------------- ##
 ## @TODO Section!
 ## -------------------------------------------------------------------------- ##
-## - Add a batter's silhouette to the plots.
-## -------------------------------------------------------------------------- ##
 
 
 import argparse
@@ -118,18 +116,18 @@ def main() -> int:
         print("="*80)
         start_time = time.time()
 
-## The plan:
-##  1. Get a list of all current skeets in skeet_dir waiting to go.
-##  2. Skip any files that don't end in '_desc.txt'
-##  3. Check if it's already been skeeted. If so, remove all files.
-##  4. Query the play_id. This is 'current_play'.
-##  5. Extract the season, batter_id, and pitcher_id. 
-##  6a. Query the season. This is 'all_season_data'.
-##  6b. Query the batter_id. This is 'batter_career_data'.
-##  6c. Query the pitcher_id. This is 'pitcher_career_data'.
-##  7a. Plot all_season_data as gray, current_play color coded to end_speed.
-##  7b. Plot batter_career_data as gray, current_play color coded to end_speed.
-##  7c. Plot pitcher_career_data as gray, current_play color coded to end_speed.
+        ## The plan:
+        ##  1. Get a list of all current skeets in skeet_dir waiting to go.
+        ##  2. Skip any files that don't end in '_desc.txt'
+        ##  3. Check if it's already been skeeted. If so, remove all files.
+        ##  4. Query the play_id. This is 'current_play'.
+        ##  5. Extract the season, batter_id, and pitcher_id. 
+        ##  6a. Query the season. This is 'all_season_data'.
+        ##  6b. Query the batter_id. This is 'batter_career_data'.
+        ##  6c. Query the pitcher_id. This is 'pitcher_career_data'.
+        ##  7a. Plot all_season_data as gray, current_play color coded to end_speed.
+        ##  7b. Plot batter_career_data as gray, current_play color coded to end_speed.
+        ##  7c. Plot pitcher_career_data as gray, current_play color coded to end_speed.
 
         ## 1. Get a list of all current skeets in skeet_dir waiting to go.
         skeet_dir_files = sorted(os.listdir(skeet_dir))

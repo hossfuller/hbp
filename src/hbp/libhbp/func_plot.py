@@ -122,7 +122,7 @@ def plot_current_play_against_season(
     ]
 
     title = f"{pitcher_info['name']} (throws {pitcher_info['pitches']}) vs {batter_info['name']} (bats {batter_info['hits']}), {game_date}"
-
+    title = title + f"\nplotted with every HBP in {season}"
     plot_filename = f"{current_play[0][1]}_{current_play[0][0]}_{season}.png"
     plot_fullpath = os.path.join(plot_dir, plot_filename)
 
@@ -268,14 +268,14 @@ def plot_single_play_against_cumulative_data(
         linewidths=0.5
     )
     
-    # Add colorbar
+    # Add colorbar with adjusted size and positioning
     sm = plt.cm.ScalarMappable(
         cmap=plt.cm.jet, 
         norm=plt.Normalize(vmin=min(end_speeds), vmax=max(end_speeds))
     )
     sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax)
-    cbar.set_label('Pitch Speed (mph)', rotation=270, labelpad=15)
+    cbar = plt.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label('Pitch Speed (mph)', rotation=270, labelpad=10)
     
     # Highlight current play if it's in the season data
     try:
@@ -382,11 +382,12 @@ def plot_single_play_against_cumulative_data(
         )
     )
     
-    # Add legend to plot
-    ax.legend(handles=legend_elements, fontsize=10, loc='upper right')
+    # Add legend to plot with bbox_to_anchor to ensure it fits within layout
+    ax.legend(handles=legend_elements, fontsize=10, loc='upper right', bbox_to_anchor=(1.0, 1.0))
     
-    # Adjust layout
-    plt.tight_layout()
+    # Adjust layout with padding to accommodate batter silhouette and other decorations
+    # Use tight_layout with adjusted parameters to ensure proper spacing for colorbar and legend
+    plt.tight_layout(pad=1.05, rect=[0.05, 0.05, 0.95, 0.95])
     
     # Set fixed axis limits.
     ax.set_xlim(plot_dimensions['x_min'], plot_dimensions['x_max']) 

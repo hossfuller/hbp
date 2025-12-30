@@ -64,15 +64,26 @@ pip install -r requirements.txt
 <!-- --------------------------------------------------------------------------- -->
 
 
+<div id='set_up_bluesky_credentials' />
+
+## Set up Bluesky credentials
+
+Create a file called `config/credentials.txt` with only the bluesky account's password. 
+
+
+
+<!-- --------------------------------------------------------------------------- -->
+
+
 ## TO-DO
 
 - [x] Move `libhbp` to the main `src/hbp` directory.
-- [ ] Break the `downloader.py` script into `dbpopulator.py` and `downloader.py` scripts.
-- [ ] New `downloader.py` script should update the database when it downloads a video.
+- [x] Break the `downloader.py` script into `dbpopulator.py` and `downloader.py` scripts.
+- [x] New `downloader.py` script should update the database when it downloads a video.
 - [ ] How do I pass a keyboard interrupt through a `.bat`/`.sh` script to the main python executable?
 - [ ] Make `SQLiteManager` receive a `create table` query so I don't have to make edits in the class itself.
 - [ ] Store the `CREATE TABLE` in the constants.py file.
-
+- [ ] Put a normalized batter's silhouette on plots to add more context.
 
 
 <!-- --------------------------------------------------------------------------- -->
@@ -82,5 +93,5 @@ pip install -r requirements.txt
 
 - [coperyan/mlb-videos](https://github.com/coperyan/mlb-videos)
 - [dylandru/BSav_Scraper_Vid](https://github.com/dylandru/BSav_Scraper_Vid)
-
+- [Smerity/all_examples_from_bluesky_atproto_python_api.py.txt](https://gist.github.com/Smerity/f896e0a9d27c725b2bc03cd85e105b31)
 
