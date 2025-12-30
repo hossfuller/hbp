@@ -38,19 +38,22 @@ def cleanup_after_skeet(
 ) -> list:
     files_removed = list()
     
-    # for filename in os.listdir(plot_dir):
-    #     pass
+    for plot_file in os.listdir(plot_dir):
+        if plot_file.startswith(f"{game_pk}_{play_id}"):
+            plot_filepath = Path(plot_dir, plot_file)
+            os.remove(plot_filepath)
+            files_removed.append(plot_filepath)
 
     for skeet_file in os.listdir(skeet_dir):
         if skeet_file.startswith(f"{game_pk}_{play_id}"):
             skeet_filepath = Path(skeet_dir, skeet_file)
-            # os.remove(skeet_filepath)
+            os.remove(skeet_filepath)
             files_removed.append(skeet_filepath)
 
     ## Remove video file.
     video_filepath = Path(video_dir, f"{game_pk}_{play_id}.mp4")
     if os.path.isfile(video_filepath):
-        # os.remove(video_filepath)
+        os.remove(video_filepath)
         files_removed.append(video_filepath)
 
     return files_removed

@@ -144,11 +144,11 @@ def get_mlb_hit_by_pitch_events_from_single_game(game: list, verbose_bool: Optio
                 'outs_when_up': play['playEvents'][-1]["count"]["outs"],
                 'inning'      : play["about"]["inning"],
                 'half_inning' : play["about"]["halfInning"],
-                'start_speed' : play['playEvents'][-1]['pitchData']['startSpeed'] if 'startSpeed' in play['playEvents'][-1]['pitchData'] else None,
-                'end_speed'   : play['playEvents'][-1]['pitchData']['endSpeed'] if 'endSpeed' in play['playEvents'][-1]['pitchData'] else None,
-                'plate_x'     : play['playEvents'][-1]['pitchData']['coordinates']['pX'] if 'pX' in play['playEvents'][-1]['pitchData']['coordinates'] else None,   ## in feet!
-                'plate_z'     : play['playEvents'][-1]['pitchData']['coordinates']['pZ'] if 'pZ' in play['playEvents'][-1]['pitchData']['coordinates'] else None,   ## in feet!
-                'pitch_name'  : play['playEvents'][-1]['details']['type']['description'] if 'type' in play['playEvents'][-1]['details'] else None,
+                'start_speed' : play['playEvents'][-1]['pitchData']['startSpeed'] if 'pitchData' in play['playEvents'][-1] and 'startSpeed' in play['playEvents'][-1]['pitchData'] else None,
+                'end_speed'   : play['playEvents'][-1]['pitchData']['endSpeed'] if 'pitchData' in play['playEvents'][-1] and 'endSpeed' in play['playEvents'][-1]['pitchData'] else None,
+                'plate_x'     : play['playEvents'][-1]['pitchData']['coordinates']['pX'] if 'pitchData' in play['playEvents'][-1] and 'pX' in play['playEvents'][-1]['pitchData']['coordinates'] else None,   ## in feet!
+                'plate_z'     : play['playEvents'][-1]['pitchData']['coordinates']['pZ'] if 'pitchData' in play['playEvents'][-1] and 'pZ' in play['playEvents'][-1]['pitchData']['coordinates'] else None,   ## in feet!
+                'pitch_name'  : play['playEvents'][-1]['details']['type']['description'] if 'type' in play['playEvents'][-1]['details'] and play['playEvents'][-1]['details']['type'] != 'no_pitch' else None,
             },
             "description": play['result']['description'],
         })

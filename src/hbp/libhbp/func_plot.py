@@ -333,7 +333,7 @@ def plot_single_play_against_cumulative_data(
             [current_x], 
             [current_z], 
             c=[current_color], 
-            s=100,  # Twice as big as regular points (50 -> 100)
+            s=150,  # Twice as big as regular points (50 -> 100)
             alpha=1.0,
             edgecolors='yellow',  # Changed to thick yellow border as requested
             linewidths=3.0,  # Thick border as requested
@@ -344,8 +344,8 @@ def plot_single_play_against_cumulative_data(
     
     # Add title and labels
     ax.set_title(title, fontsize=14, pad=20)
-    ax.set_xlabel('X Position (feet from home plate)', fontsize=12)
-    ax.set_ylabel('Z Position (feet from ground)', fontsize=12)
+    ax.set_xlabel('Feet from center of home plate', fontsize=12)
+    ax.set_ylabel('Feet from ground', fontsize=12)
     
     # Add grid and legend
     ax.grid(True, alpha=0.3)

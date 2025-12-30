@@ -76,6 +76,13 @@ def get_season_data(season: int, dbfile: str = db_file_path, dbtable: str = db_t
         )
     return season_data    
 
+
+def get_season_year(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
+    current_play = get_hbp_play_data(play_id, db_file_path, db_table)
+    game_date        = current_play[0][2]
+    season,month,day = game_date.split('-')
+    return season
+
     
 def has_been_downloaded(play_id: str, dbfile: str = db_file_path, dbtable: str = db_table) -> bool:
     return has_been_done(play_id, "downloaded", dbfile, dbtable)

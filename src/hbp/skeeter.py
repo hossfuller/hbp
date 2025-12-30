@@ -25,7 +25,7 @@ from .libhbp import func_skeet as sk
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
-from atproto import Client, client_utils
+from atproto import Client, client_utils, models
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -44,7 +44,7 @@ parser.add_argument(
     "--num-posts",
     type=int,
     default=1,
-    help="Number of HBP events to post.",
+    help="Number of HBP events to post. Defaults to '%(default)s'.",
 )
 parser.add_argument(
     "-n",
@@ -220,72 +220,72 @@ def main(num_posts: Optional[int] = 1) -> int:
                 pass        
             
             if video_filepath:
-                print(f"🎥 Video file: {video_filepath}")
+                print(f"🎥 Video file:     {video_filepath}")                
 
-            ## 3. use atproto client to construct and send skeet
-            post = None
+            ## 3. Get analysis plots and build plots data structures.
+            plots = []
+            plot_alts = []
+            if dbmgr.has_been_analyzed(play_id):
+                season       = dbmgr.get_season_year(play_id)
+                current_play = dbmgr.get_hbp_play_data(play_id)
+                pitcher_info = bb.get_mlb_player_details(current_play[0][3], verbose)
+                batter_info  = bb.get_mlb_player_details(current_play[0][4], verbose)
+
+                season_plot_filename  = Path(plot_dir, f"{game_pk}_{play_id}_{season}.png")
+                batter_plot_filename  = Path(plot_dir, f"{game_pk}_{play_id}_batter.png")
+                pitcher_plot_filename = Path(plot_dir, f"{game_pk}_{play_id}_pitcher.png")
+                if os.path.exists(season_plot_filename):
+                    plots.append(season_plot_filename)
+                    plot_alts.append(f"Plot showing this HBP in the context of the entire {season} season.")
+                    print(f"📊 Season's plot:  {season_plot_filename}")
+                if os.path.exists(batter_plot_filename):
+                    plots.append(batter_plot_filename)
+                    plot_alts.append(f"Plot showing this HBP in the context of {batter_info['name']}'s entire career.")
+                    print(f"📊 Batter's plot:  {batter_plot_filename}")
+                if os.path.exists(pitcher_plot_filename):
+                    plots.append(pitcher_plot_filename)
+                    plot_alts.append(f"Plot showing this HBP in the context of {pitcher_info['name']}'s entire career.")
+                    print(f"📊 Pitcher's plot: {pitcher_plot_filename}")
+
+            ## 3. Use atproto client to construct and send skeet(s).
             try:
                 if video_filepath:
                     vid_data = None
                     with open(video_filepath, 'rb') as f:
                         vid_data = f.read()
-
                     if vid_data:
-                        post = client.send_video(
-                            text=skeet_text,
-                            video=vid_data,
-                            video_alt=f"A video showing the hit-by-pitch at-bat."
-                        )
+                        root_post_ref = models.create_strong_ref(
+                            client.send_video(
+                                text=skeet_text,
+                                video=vid_data,
+                                video_alt=f"A video showing the hit-by-pitch at-bat."
+                            )
+                        )                        
                     else:
                         raise Exception(f"❌ Unable to read video file {video_filepath}!")
                 else:
-                    post = client.send_post(skeet_text)
+                    root_post_ref = models.create_strong_ref(client.send_post(skeet_text))
+                    
+                if plots:
+                    images = []
+                    for plot_path in plots:
+                        with open(plot_path, 'rb') as f:
+                            images.append(f.read())
+                    reply_to_root = models.create_strong_ref(
+                        client.send_images(
+                            text='', 
+                            images=images, 
+                            image_alts=plot_alts,
+                            reply_to=models.AppBskyFeedPost.ReplyRef(parent=root_post_ref, root=root_post_ref),
+                        )
+                    )
             except:
-                pprint.pprint(post)
                 raise Exception(f"❌ Post of {play_id} failed!")
                             
-                
-                
-            ## 3. Use bsky API to construct skeet structure in skeets dict.
-            # skeets = list()
-            # skeets.append({
-            #     "$type": "app.bsky.feed.post",
-            #     "text": skeet_text,
-            #     "createdAt": bsky_time,
-            # })
+            # 4. Clean up!
+            dbmgr.set_skeeted_flag(play_id)
+            sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
             
-            ## 4. If the event has been analyzed, build reply skeets with images
-            ## and alt text.
-        #     if dbmgr.has_been_analyzed(play_id):
-        #         ##  - Get analyze skeet text.
-        #         ##  - Get plot files.
-        #         ## Use bsky API to construct analyze skeet structure in skeets dict.
-        #         pass
-            
-
-
-            ## 5. Upload skeet(s)!
-            # parent = None
-            # for index, skeet in enumerate(skeets):
-            #     resp = requests.post(
-            #         bsky_create_record_endpt,
-            #         headers={"Authorization": "Bearer " + session["accessJwt"]},
-            #         json={
-            #             "repo": session["did"],
-            #             "collection": "app.bsky.feed.post",
-            #             "record": skeet,
-            #         },
-            #     )
-            #     print(json.dumps(resp.json(), indent=2))
-            #     resp.raise_for_status()
-            
-            
-            
-
-            ## 6. Clean up!
-            # dbmgr.set_skeeted_flag(play_id)
-            # sk.cleanup_after_skeet(int(game_pk), play_id, verbose)
-
             print()
             skeet_counter = skeet_counter + 1
             if skeet_counter >= num_posts:
