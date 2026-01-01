@@ -200,7 +200,7 @@ def main(start_date: Optional[str] = None) -> int:
         end_time = time.time()
         elapsed = end_time - start_time
         print("="*80)
-        print(f'Completed in {elapsed:.2f} seconds', file=sys.stderr)
+        print(f'Completed in {elapsed:.2f} seconds')
         print("="*80)
         print()
         return 0

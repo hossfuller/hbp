@@ -73,7 +73,16 @@ def get_hbp_play_data(play_id: str, dbfile: str = db_file_path, dbtable: str = d
             [play_id]
         )
     return select_data    
-    
+
+
+def get_latest_date_that_hasnt_been_downloaded() -> str:
+    select_data = None
+    with SQLiteManager(db_file_path) as db: 
+        select_data = db.query_hbpdata(
+            f"SELECT MAX(game_date) FROM {db_table} WHERE downloaded = 0",
+            []
+        )
+    return select_data[0][0]    
     
 def get_season_data(season: int, dbfile: str = db_file_path, dbtable: str = db_table) -> list:
     season_data = []

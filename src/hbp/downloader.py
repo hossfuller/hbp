@@ -23,7 +23,7 @@ from .libhbp import func_skeet as sk
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 
@@ -156,6 +156,12 @@ def main(start_date: Optional[str] = None) -> int:
         print("="*80)
         start_time = time.time()
 
+        if start_date == date(2025, 11, 1):
+            print(f"Given start date, {start_date}, is the default date.")
+            start_date = dbmgr.get_latest_date_that_hasnt_been_downloaded()
+            print(f"New starting date: {start_date}")
+            print()
+
         total_hbp_events = 0
         for xday in range(num_days):
             print("--->")
@@ -243,7 +249,7 @@ def main(start_date: Optional[str] = None) -> int:
         end_time = time.time()
         elapsed = end_time - start_time
         print("="*80)
-        print(f'Completed in {elapsed:.2f} seconds', file=sys.stderr)
+        print(f'Completed in {elapsed:.2f} seconds')
         print("="*80)
         print()
         return 0

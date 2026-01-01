@@ -19,14 +19,13 @@ from .libhbp import basic
 from .libhbp import constants as const
 from .libhbp import func_baseball as bb
 from .libhbp import func_database as dbmgr
-from .libhbp import func_general as gen
 from .libhbp import func_skeet as sk
 
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
 from atproto import Client, client_utils, models
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -298,7 +297,7 @@ def main(num_posts: Optional[int] = 1) -> int:
         end_time = time.time()
         elapsed = end_time - start_time
         print("="*80)
-        print(f'Completed in {elapsed:.2f} seconds', file=sys.stderr)
+        print(f'Completed in {elapsed:.2f} seconds')
         print("="*80)
         print()
         return 0
