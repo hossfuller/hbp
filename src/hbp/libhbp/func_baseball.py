@@ -63,6 +63,7 @@ def get_mlb_game_deets(game: list, verbose_bool: Optional[bool] = False) -> list
         },
         'description': game['seriesDescription'],
         'date'       : game['officialDate'],
+        'innings'    : get_mlb_game_total_innings(game['gamePk'], verbose_bool),
         'game_pk'    : game['gamePk'],
     }
     if verbose_bool:
@@ -189,3 +190,15 @@ def get_mlb_team_attribute(full_team_str: str, sought_after_attr: str, verbose_b
             team_attr = team_deets.get(sought_after_attr)
     return team_attr
 
+
+def get_mlb_game_total_innings(game_pk: str, verbose_bool: Optional[bool] = False) -> int:
+    live_feed_url = const.MLB_STATS_BASE_URL + const.MLB_STATS_LIVE_FEED_STUB.replace('<<GAME_PK>>', str(game_pk))
+    response = requests.get(live_feed_url, timeout=10)
+    response.raise_for_status()
+    data = response.json()
+    
+    if verbose_bool:
+        pprint.pprint(data)
+    
+    all_plays = data.get("liveData", {}).get("plays", {}).get("allPlays", [])    
+    return all_plays[-1]['about']['inning']

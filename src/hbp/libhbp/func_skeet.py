@@ -100,8 +100,7 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
         
         winning_line_str = ''
         if 'final_score' in game['home']: 
-            winning_line_str = f"{winning_team} won {winning_score}-{losing_score}"  
-            # winning_line_str = f"{winning_team} won {winning_score}-{losing_score} in {game['innings']} innings."  
+            winning_line_str = f"{winning_team} won {winning_score}-{losing_score} in {game['innings']} innings"  
             
         skeet_strs = [team_str, date_str, series_desc_str, nobody_got_hit_str, winning_line_str]
 
@@ -132,8 +131,7 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
 
         final_score_str = ''
         if 'final_score' in game['home']: 
-            final_score_str = f"Final: {winning_team} won {winning_score}-{losing_score}"
-            # final_score_str = f"Final: {winning_team} won {winning_score}-{losing_score} in {game['innings']} innings."
+            final_score_str = f"Final: {winning_team} won {winning_score}-{losing_score} in {game['innings']} innings."
 
         skeet_strs = [date_str, series_desc_str, pitcher_str, batter_str, count_str, pitch_str, final_score_str]
 
