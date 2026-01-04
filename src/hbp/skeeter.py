@@ -8,7 +8,6 @@
 
 
 import argparse
-import json
 import os
 import pprint
 import sys
@@ -24,7 +23,7 @@ from .libhbp import func_skeet as sk
 from .libhbp.configurator import ConfigReader
 from .libhbp.logger import PrintLogger
 
-from atproto import Client, client_utils, models
+from atproto import Client, exceptions, models
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -201,7 +200,7 @@ def main(num_posts: Optional[int] = 1) -> int:
             skeet_text = sk.read_skeet_text(full_skeet_filename)
             print(f"{skeet_text}")
 
-            ## 2. Get video text.
+            ## 2. Get video.
             video_filepath = Path(video_dir, f"{game_pk}_{play_id}.mp4")
             if not dbmgr.has_been_downloaded(play_id) and not os.path.exists(video_filepath):
                 ## Don't add a video!
@@ -213,7 +212,8 @@ def main(num_posts: Optional[int] = 1) -> int:
                 print(f"  🤨 HBP video has been downloaded but not marked so in the database.")
             elif dbmgr.has_been_downloaded(play_id) and not os.path.exists(video_filepath):
                 ## This is an error condition! File is missing.
-                raise Exception(f"❌ Video {video_filepath} is missing!")
+                video_filepath = None
+                print(f"❌ Video {video_filepath} is missing!")
             elif dbmgr.has_been_downloaded(play_id) and os.path.exists(video_filepath):
                 ## File has been marked as downloaded and does exist.
                 pass        
@@ -247,12 +247,12 @@ def main(num_posts: Optional[int] = 1) -> int:
                     print(f"📊 Pitcher's plot: {pitcher_plot_filename}")
 
             ## 3. Use atproto client to construct and send skeet(s).
-            try:
-                if video_filepath:
-                    vid_data = None
-                    with open(video_filepath, 'rb') as f:
-                        vid_data = f.read()
-                    if vid_data:
+            if video_filepath:
+                vid_data = None
+                with open(video_filepath, 'rb') as f:
+                    vid_data = f.read()
+                if vid_data:
+                    try:
                         root_post_ref = models.create_strong_ref(
                             client.send_video(
                                 text=skeet_text,
@@ -260,18 +260,25 @@ def main(num_posts: Optional[int] = 1) -> int:
                                 video_alt=f"A video showing the hit-by-pitch at-bat."
                             )
                         )                        
-                    else:
-                        raise Exception(f"❌ Unable to read video file {video_filepath}!")
+                    except exceptions.NetworkError as e:
+                        print(f"[p:{play_id}] Network error occurred: {e}")
+                    except exceptions.AtProtocolError as e:
+                        print(f"[p:{play_id}] An AT Protocol error occurred: {e}")
+                    except Exception as e:
+                        print(f"[p:{play_id}] A general error occurred: {e}")
                 else:
-                    root_post_ref = models.create_strong_ref(client.send_post(skeet_text))
+                    raise Exception(f"❌ Unable to read video file {video_filepath}!")
+            else:
+                root_post_ref = models.create_strong_ref(client.send_post(skeet_text))
                     
-                if plots:
-                    images = []
-                    for plot_path in plots:
-                        with open(plot_path, 'rb') as f:
-                            images.append(f.read())
-                    
-                    first_datetime_obj = datetime.strptime(dbmgr.get_earliest_date(), "%Y-%m-%d")
+            if plots:
+                images = []
+                for plot_path in plots:
+                    with open(plot_path, 'rb') as f:
+                        images.append(f.read())
+                
+                first_datetime_obj = datetime.strptime(dbmgr.get_earliest_date(), "%Y-%m-%d")
+                try:
                     reply_to_root = models.create_strong_ref(
                         client.send_images(
                             text=f"Based on data collected through {first_datetime_obj.strftime("%d %b %Y")}.", 
@@ -280,8 +287,12 @@ def main(num_posts: Optional[int] = 1) -> int:
                             reply_to=models.AppBskyFeedPost.ReplyRef(parent=root_post_ref, root=root_post_ref),
                         )
                     )
-            except:
-                raise Exception(f"❌ Post of {play_id} failed!")
+                except exceptions.NetworkError as e:
+                    print(f"[c:{play_id}] Network error occurred: {e}")
+                except exceptions.AtProtocolError as e:
+                    print(f"[c:{play_id}] An AT Protocol error occurred: {e}")
+                except Exception as e:
+                    print(f"[c:{play_id}] A general error occurred: {e}")
                             
             # 4. Clean up!
             if not test_mode:

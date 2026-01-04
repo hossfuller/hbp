@@ -81,7 +81,7 @@ def write_desc_skeet_text(game: list, event: list, skeet_dir: str, verbose_bool:
 
     game_datetime_obj = datetime.strptime(game['date'], "%Y-%m-%d")
     date_str          = f"⚾💥 {game_datetime_obj.strftime("%d %B %Y")} 💥⚾"
-    series_desc_str   = f"{game['description']}"
+    series_desc_str   = f"Game: {game['description']}"
 
     ## If the game is finished, there'll be a final score.
     if 'final_score' in game['home']:
